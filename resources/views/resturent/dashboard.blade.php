@@ -41,7 +41,9 @@
     };
 
     $profileUrl = \Illuminate\Support\Facades\Route::has('profile.edit') ? route('profile.edit') : null;
-    $imageUrl = $hasRestaurant && $restaurant->image ? asset('storage/' . ltrim($restaurant->image, '/')) : null;
+    $imageUrl = $hasRestaurant && $restaurant->image
+    ? asset('storage/' . ltrim($restaurant->image, '/'))
+    : null;
 
     // Only routes that exist are linked. Everything else is a disabled "Soon" item.
     $nav = [
@@ -54,7 +56,7 @@
         ],
         'Management' => [
             ['Orders', 'ti-shopping-bag', route('resturent.orders.index'), false],
-            ['Menu / Food Items', 'ti-tools-kitchen-2', null, false],
+           ['Menu / Food Items', 'ti-tools-kitchen-2', route('resturent.menu.index'), true],
             ['Categories', 'ti-category', null, false],
            ['Staff', 'ti-users-group', route('resturent.staff.index'), false],
         ],

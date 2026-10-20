@@ -8,7 +8,15 @@ use App\Http\Controllers\AdminUserController;
 use App\Http\Controllers\RestaurantController;
 use App\Http\Controllers\RestaurantStaffController;
 use App\Http\Controllers\Resturent\OrderController;
+use App\Http\Controllers\Resturent\MenuItemController;
+use App\Http\Controllers\FoodController;
+use App\Http\Controllers\CartController;
+use App\Http\Controllers\CartPageController;
+use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\Rider\RiderController;
 use App\Enums\UserRole;
+use App\Models\Restaurant;
+use App\Models\Order;
 
 
 /*
@@ -16,14 +24,18 @@ use App\Enums\UserRole;
 | Public Routes
 |--------------------------------------------------------------------------
 */
+Route::get('/', [RestaurantController::class, 'index'])
+    ->name('home');
 
-Route::get('/', function () {
-    return view('index');
-})->name('home');
+Route::get('/restaurants/{restaurant}', [
+    RestaurantController::class,
+    'show'
+])->name('restaurants.show');
 
-Route::get('/show', function () {
-    return view('resturent.show');
-});
+Route::get('/foods/{food}', [
+    FoodController::class,
+    'show'
+])->whereNumber('food')->name('foods.show');
 
 Route::get('/app', function () {
     return view('layouts.app');
@@ -100,13 +112,66 @@ Route::get('/dashboard', function () {
 |--------------------------------------------------------------------------
 */
 
+
 Route::middleware(['auth', 'role:customer'])->group(function () {
 
     Route::get('/customer/dashboard', function () {
-        return view('customer.dashboard');
+        $user = Auth::user();
+
+        $orders = Order::with('restaurant')
+            ->where('customer_id', $user->id)
+            ->latest()
+            ->get();
+
+        $activeOrders = $orders->whereNotIn('status', [
+            'delivered',
+            'completed',
+            'cancelled',
+            'rejected',
+        ]);
+
+        $activeOrder = $activeOrders->first();
+
+        $totalOrders = $orders->count();
+
+        $completedOrders = $orders->whereIn('status', [
+            'delivered',
+            'completed',
+        ])->count();
+
+        $totalSpent = $orders
+            ->whereIn('status', ['delivered', 'completed'])
+            ->sum('total');
+
+        $recentOrders = $orders->take(5);
+
+        return view('customer.dashboard', compact(
+            'user',
+            'orders',
+            'activeOrders',
+            'activeOrder',
+            'totalOrders',
+            'completedOrders',
+            'totalSpent',
+            'recentOrders'
+        ));
     })->name('customer.dashboard');
 
+    
+Route::get('/customer/orders/{order}', function (Order $order) {
+    abort_unless(
+        $order->customer_id === Auth::id(),
+        403
+    );
+
+    $order->load(['restaurant', 'items']);
+
+    return view('customer.orders.show', compact('order'));
+})->name('customer.orders.show');
+
+
 });
+
 
 
 /*
@@ -146,11 +211,17 @@ Route::middleware(['auth', 'role:super_admin'])->group(function () {
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth', 'role:rider'])->group(function () {
+Route::middleware(['auth', 'role:rider'])->prefix('rider')->name('rider.')->group(function () {
+    Route::get('/dashboard', [RiderController::class, 'index'])->name('dashboard');
+    Route::get('/orders/available', [RiderController::class, 'available'])->name('available');
+    Route::get('/deliveries', [RiderController::class, 'deliveries'])->name('deliveries');
+    Route::get('/active', [RiderController::class, 'active'])->name('active');
+    Route::get('/history', [RiderController::class, 'history'])->name('history');
 
-    Route::get('/rider/dashboard', function () {
-        return view('rider.dashboard');
-    })->name('rider.dashboard');
+    Route::post('/orders/{order}/accept', [RiderController::class, 'accept'])->whereNumber('order')->name('orders.accept');
+    Route::post('/orders/{order}/pickup', [RiderController::class, 'pickup'])->whereNumber('order')->name('orders.pickup');
+    Route::post('/orders/{order}/out-for-delivery', [RiderController::class, 'outForDelivery'])->whereNumber('order')->name('orders.out');
+    Route::post('/orders/{order}/delivered', [RiderController::class, 'delivered'])->whereNumber('order')->name('orders.delivered');
 
 });
 
@@ -279,6 +350,11 @@ Route::middleware([
         'show'
     ])->name('resturent.orders.show');
 
+    Route::patch(
+    '/resturent/orders/{order}/status',
+    [\App\Http\Controllers\Resturent\OrderController::class, 'updateStatus']
+)->name('resturent.orders.updateStatus');
+
 });
 
 
@@ -299,3 +375,20 @@ Route::middleware([
 
 });
 
+Route::middleware('auth')->post('/cart/add', [CartController::class, 'store'])
+    ->name('cart.add');
+
+    Route::middleware('auth')->prefix('cart')->name('cart.')->group(function () {
+    Route::get('/', [CartPageController::class, 'index'])->name('index');
+    Route::patch('/{cartItem}', [CartPageController::class, 'update'])->name('update');
+    Route::delete('/{cartItem}', [CartPageController::class, 'destroy'])->name('destroy');
+});
+
+
+Route::middleware('auth')->group(function () {
+    Route::get('/checkout', [CheckoutController::class, 'index'])
+        ->name('checkout.index');
+
+    Route::post('/checkout', [CheckoutController::class, 'store'])
+        ->name('checkout.store');
+});

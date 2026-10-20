@@ -23,6 +23,7 @@ class Order extends Model
         'payment_status',
         'payment_method',
         'notes',
+        'delivery_zone',
     ];
 
     public function customer(): BelongsTo

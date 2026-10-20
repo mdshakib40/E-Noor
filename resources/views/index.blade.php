@@ -262,44 +262,51 @@
 
             <!-- BAG -->
 
-            <button
-                type="button"
-                class="relative
-                       grid
-                       h-[38px]
-                       w-[38px]
-                       place-items-center
-                       rounded-full
-                       border
-                       border-white/[.094]
-                       bg-transparent">
+            
+<a
+    href="{{ route('cart.index') }}"
+    aria-label="Open shopping bag"
+    class="relative
+           grid
+           h-[38px]
+           w-[38px]
+           place-items-center
+           rounded-full
+           border
+           border-white/[.094]
+           bg-transparent
+           transition
+           hover:border-gold/40
+           hover:bg-white/[.04]">
 
-                <i
-                    data-lucide="shopping-bag"
-                    class="w-4">
-                </i>
+    <i
+        data-lucide="shopping-bag"
+        class="w-4">
+    </i>
 
+    <span
+        id="bagCount"
+        data-cart-count
+        class="absolute
+               -right-[3px]
+               -top-[3px]
+               grid
+               h-4
+               min-w-4
+               place-items-center
+               rounded-full
+               bg-gold
+               px-1
+               text-[8px]
+               font-extrabold
+               text-night">
 
-                <span
-                    id="bagCount"
-                    class="absolute
-                           -right-[3px]
-                           -top-[3px]
-                           grid
-                           h-4
-                           w-4
-                           place-items-center
-                           rounded-full
-                           bg-gold
-                           text-[8px]
-                           font-extrabold
-                           text-night">
+        {{ auth()->check() ? auth()->user()->cartItems()->sum('quantity') : 0 }}
 
-                    2
+    </span>
 
-                </span>
+</a>
 
-            </button>
 
 
             <!-- ================================================= -->
@@ -1664,1086 +1671,209 @@
 <!-- RESTAURANTS -->
 <!-- ========================================================= -->
 
-<section
-    id="discover"
-    class="border-t
-           border-white/[.055]
-           py-[105px]
-           max-[680px]:py-[75px]">
 
+<section id="discover" class="border-t border-white/[.055] py-[105px] max-[680px]:py-[75px]">
+    <div class="mx-auto w-[min(1240px,calc(100%-48px))] max-[680px]:w-[calc(100%-30px)]">
 
-    <div
-        class="mx-auto
-               w-[min(1240px,calc(100%-48px))]
-               max-[680px]:w-[calc(100%-30px)]">
-
-
-        <div
-            class="mb-8
-                   flex
-                   items-end
-                   justify-between
-                   max-[680px]:block">
-
-
+        <div class="mb-8 flex items-end justify-between max-[680px]:block">
             <div>
-
-                <div
-                    class="flex
-                           items-center
-                           gap-[10px]
-                           text-[10px]
-                           font-extrabold
-                           uppercase
-                           tracking-[.2em]
-                           text-gold2">
-
-                    <span
-                        class="h-px
-                               w-[27px]
-                               bg-gold">
-                    </span>
-
+                <div class="flex items-center gap-[10px] text-[10px] font-extrabold uppercase tracking-[.2em] text-gold2">
+                    <span class="h-px w-[27px] bg-gold"></span>
                     Worth knowing
-
                 </div>
 
-
-                <h2
-                    class="mt-3
-                           font-serifNoor
-                           text-[clamp(35px,5vw,60px)]
-                           leading-[.95]
-                           tracking-[-.06em]">
-
-                    Good places<br/>
-                    to begin.
-
+                <h2 class="mt-3 font-serifNoor text-[clamp(35px,5vw,60px)] leading-[.95] tracking-[-.06em]">
+                    Good places<br/>to begin.
                 </h2>
-
             </div>
 
-
-            <a
-                href="#discover"
-                class="border-b
-                       border-white/[.28]
-                       pb-2
-                       text-[10px]
-                       uppercase
-                       tracking-[.1em]
-                       hover:border-gold
-                       hover:text-gold2">
-
-                View all places
-
-            </a>
-
+            <span class="border-b border-white/[.28] pb-2 text-[10px] uppercase tracking-[.1em]">
+                Our kitchens
+            </span>
         </div>
 
+        <div class="grid grid-cols-4 gap-[15px] max-[950px]:grid-cols-2 max-[680px]:grid-cols-2 max-[680px]:gap-[10px]">
 
-        <div
-            class="grid
-                   grid-cols-4
-                   gap-[15px]
-                   max-[950px]:grid-cols-2
-                   max-[680px]:grid-cols-2
-                   max-[680px]:gap-[10px]">
+            @forelse ($restaurants as $restaurant)
+                
+                <article
+                    data-search="{{ $restaurant->name }} {{ $restaurant->description }} {{ $restaurant->address }}"
+                    class="group overflow-hidden rounded-[22px] border border-white/[.075] bg-[#191815] transition duration-300 hover:-translate-y-[7px] hover:border-gold/[.4]">
 
+                    <div class="relative h-[210px] overflow-hidden max-[680px]:h-[150px]">
+                        @if ($restaurant->image)
+                            <img
+                                class="h-full w-full object-cover transition duration-500 group-hover:scale-[1.07]"
+                                src="{{ asset('storage/' . ltrim($restaurant->image, '/')) }}"
+                                alt="{{ $restaurant->name }}"
+                                loading="lazy"
+                                onerror="this.style.display='none'; this.nextElementSibling.style.display='grid';">
 
-            <!-- RESTAURANT 1 -->
-
-            <article
-                data-search="kacchi bhai kacchi bangla"
-                class="group
-                       overflow-hidden
-                       rounded-[22px]
-                       border
-                       border-white/[.075]
-                       bg-[#191815]
-                       transition
-                       duration-300
-                       hover:-translate-y-[7px]
-                       hover:border-gold/[.4]">
-
-
-                <div
-                    class="relative
-                           h-[210px]
-                           overflow-hidden
-                           max-[680px]:h-[150px]">
-
-                    <img
-                        class="h-full
-                               w-full
-                               object-cover
-                               transition
-                               duration-500
-                               group-hover:scale-[1.07]"
-                        src="https://images.unsplash.com/photo-1563379091339-03246963d51a?auto=format&fit=crop&w=1000&q=88"
-                        alt="Kacchi Bhai"
-                    />
-
-
-                    <button
-                        data-fav
-                        type="button"
-                        class="absolute
-                               right-[13px]
-                               top-[13px]
-                               grid
-                               h-[33px]
-                               w-[33px]
-                               place-items-center
-                               rounded-full
-                               border
-                               border-white/[.19]
-                               bg-[#11110fb8]">
-
-                        <i
-                            data-lucide="heart"
-                            class="w-[15px]">
-                        </i>
-
-                    </button>
-
-                </div>
-
-
-                <div
-                    class="p-4
-                           max-[680px]:p-3">
-
-                    <h3
-                        class="mb-2
-                               font-serifNoor
-                               text-[19px]">
-
-                        Kacchi Bhai
-
-                    </h3>
-
-
-                    <div
-                        class="flex
-                               gap-2
-                               text-[10px]
-                               text-[#918a80]">
-
-                        <b class="text-gold2">
-                            ★ 4.9
-                        </b>
-
-                        <span>•</span>
-
-                        <span>
-                            25–35 min
-                        </span>
-
+                            <div class="absolute inset-0 hidden place-items-center bg-[#252119] text-gold2">
+                                <i data-lucide="utensils" class="h-8 w-8"></i>
+                            </div>
+                        @else
+                            <div class="grid h-full w-full place-items-center bg-[#252119] text-gold2">
+                                <i data-lucide="utensils" class="h-8 w-8"></i>
+                            </div>
+                        @endif
                     </div>
 
+                    <div class="p-4 max-[680px]:p-3">
+                        <h3 class="mb-2 truncate font-serifNoor text-[19px]">
+                            {{ $restaurant->name }}
+                        </h3>
 
-                    <div
-                        class="mt-[14px]
-                               flex
-                               justify-between
-                               border-t
-                               border-white/[.06]
-                               pt-3
-                               text-[9px]">
+                        <p class="line-clamp-2 min-h-[36px] text-[10px] leading-[1.7] text-[#918a80]">
+                            {{ $restaurant->description ?: 'Discover this kitchen on NOOR.' }}
+                        </p>
 
-                        <span>
-                            Kacchi · Bangla
-                        </span>
+                        <div class="mt-[14px] border-t border-white/[.06] pt-3 text-[10px] text-[#b8d985]">
+                            <i data-lucide="map-pin" class="mr-1 inline h-3 w-3"></i>
+                            {{ $restaurant->address ?: 'Address not provided' }}
+                        </div>
 
-                        <em
-                            class="font-extrabold
-                                   not-italic
-                                   text-greenNoor">
+                        <a
+                            href="{{ route('restaurants.show', $restaurant) }}"
+                            class="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-gold/30 bg-gold/[.07] px-4 py-3 text-[11px] font-semibold tracking-[.5px] text-gold2 transition duration-300 hover:border-gold hover:bg-gold hover:text-[#191815]">
 
-                            ৳30 delivery
+                            View Details
 
-                        </em>
-
+                            <i
+                                data-lucide="arrow-up-right"
+                                class="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5">
+                            </i>
+                        </a>
                     </div>
+                </article>
 
+            @empty
+                <div class="col-span-full rounded-[22px] border border-white/[.075] bg-[#191815] px-6 py-12 text-center">
+                    <i data-lucide="store" class="mx-auto mb-4 h-8 w-8 text-gold2"></i>
+                    <h3 class="font-serifNoor text-2xl">Good things are cooking.</h3>
+                    <p class="mt-2 text-sm text-[#918a80]">
+                        No active restaurants yet. Please check back soon.
+                    </p>
                 </div>
-
-            </article>
-
-
-            <!-- RESTAURANT 2 -->
-
-            <article
-                data-search="the grill room charcoal grill"
-                class="group
-                       overflow-hidden
-                       rounded-[22px]
-                       border
-                       border-white/[.075]
-                       bg-[#191815]
-                       transition
-                       duration-300
-                       hover:-translate-y-[7px]
-                       hover:border-gold/[.4]">
-
-
-                <div
-                    class="relative
-                           h-[210px]
-                           overflow-hidden
-                           max-[680px]:h-[150px]">
-
-                    <img
-                        class="h-full
-                               w-full
-                               object-cover
-                               transition
-                               duration-500
-                               group-hover:scale-[1.07]"
-                        src="https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&w=900&q=85"
-                        alt="The Grill Room"
-                    />
-
-
-                    <button
-                        data-fav
-                        type="button"
-                        class="absolute
-                               right-[13px]
-                               top-[13px]
-                               grid
-                               h-[33px]
-                               w-[33px]
-                               place-items-center
-                               rounded-full
-                               border
-                               border-white/[.19]
-                               bg-[#11110fb8]">
-
-                        <i
-                            data-lucide="heart"
-                            class="w-[15px]">
-                        </i>
-
-                    </button>
-
-                </div>
-
-
-                <div
-                    class="p-4
-                           max-[680px]:p-3">
-
-                    <h3
-                        class="mb-2
-                               font-serifNoor
-                               text-[19px]">
-
-                        The Grill Room
-
-                    </h3>
-
-
-                    <div
-                        class="flex
-                               gap-2
-                               text-[10px]
-                               text-[#918a80]">
-
-                        <b class="text-gold2">
-                            ★ 4.8
-                        </b>
-
-                        <span>•</span>
-
-                        <span>
-                            30–40 min
-                        </span>
-
-                    </div>
-
-
-                    <div
-                        class="mt-[14px]
-                               flex
-                               justify-between
-                               border-t
-                               border-white/[.06]
-                               pt-3
-                               text-[9px]">
-
-                        <span>
-                            Charcoal · Grill
-                        </span>
-
-                        <em
-                            class="font-extrabold
-                                   not-italic
-                                   text-greenNoor">
-
-                            ৳30 delivery
-
-                        </em>
-
-                    </div>
-
-                </div>
-
-            </article>
-
-
-            <!-- RESTAURANT 3 -->
-
-            <article
-                data-search="rong kitchen chinese asian noodles"
-                class="group
-                       overflow-hidden
-                       rounded-[22px]
-                       border
-                       border-white/[.075]
-                       bg-[#191815]
-                       transition
-                       duration-300
-                       hover:-translate-y-[7px]
-                       hover:border-gold/[.4]">
-
-
-                <div
-                    class="relative
-                           h-[210px]
-                           overflow-hidden
-                           max-[680px]:h-[150px]">
-
-                    <img
-                        class="h-full
-                               w-full
-                               object-cover
-                               transition
-                               duration-500
-                               group-hover:scale-[1.07]"
-                        src="https://images.unsplash.com/photo-1563245372-f21724e3856d?auto=format&fit=crop&w=900&q=85"
-                        alt="Rong Kitchen"
-                    />
-
-
-                    <button
-                        data-fav
-                        type="button"
-                        class="absolute
-                               right-[13px]
-                               top-[13px]
-                               grid
-                               h-[33px]
-                               w-[33px]
-                               place-items-center
-                               rounded-full
-                               border
-                               border-white/[.19]
-                               bg-[#11110fb8]">
-
-                        <i
-                            data-lucide="heart"
-                            class="w-[15px]">
-                        </i>
-
-                    </button>
-
-                </div>
-
-
-                <div
-                    class="p-4
-                           max-[680px]:p-3">
-
-                    <h3
-                        class="mb-2
-                               font-serifNoor
-                               text-[19px]">
-
-                        Rong Kitchen
-
-                    </h3>
-
-
-                    <div
-                        class="flex
-                               gap-2
-                               text-[10px]
-                               text-[#918a80]">
-
-                        <b class="text-gold2">
-                            ★ 4.7
-                        </b>
-
-                        <span>•</span>
-
-                        <span>
-                            25–35 min
-                        </span>
-
-                    </div>
-
-
-                    <div
-                        class="mt-[14px]
-                               flex
-                               justify-between
-                               border-t
-                               border-white/[.06]
-                               pt-3
-                               text-[9px]">
-
-                        <span>
-                            Chinese · Asian
-                        </span>
-
-                        <em
-                            class="font-extrabold
-                                   not-italic
-                                   text-greenNoor">
-
-                            ৳25 delivery
-
-                        </em>
-
-                    </div>
-
-                </div>
-
-            </article>
-
-
-            <!-- RESTAURANT 4 -->
-
-            <article
-                data-search="bhorta ghor bangla homemade"
-                class="group
-                       overflow-hidden
-                       rounded-[22px]
-                       border
-                       border-white/[.075]
-                       bg-[#191815]
-                       transition
-                       duration-300
-                       hover:-translate-y-[7px]
-                       hover:border-gold/[.4]">
-
-
-                <div
-                    class="relative
-                           h-[210px]
-                           overflow-hidden
-                           max-[680px]:h-[150px]">
-
-                    <img
-                        class="h-full
-                               w-full
-                               object-cover
-                               transition
-                               duration-500
-                               group-hover:scale-[1.07]"
-                        src="https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=900&q=85"
-                        alt="Bhorta Ghor"
-                    />
-
-
-                    <button
-                        data-fav
-                        type="button"
-                        class="absolute
-                               right-[13px]
-                               top-[13px]
-                               grid
-                               h-[33px]
-                               w-[33px]
-                               place-items-center
-                               rounded-full
-                               border
-                               border-white/[.19]
-                               bg-[#11110fb8]">
-
-                        <i
-                            data-lucide="heart"
-                            class="w-[15px]">
-                        </i>
-
-                    </button>
-
-                </div>
-
-
-                <div
-                    class="p-4
-                           max-[680px]:p-3">
-
-                    <h3
-                        class="mb-2
-                               font-serifNoor
-                               text-[19px]">
-
-                        Bhorta Ghor
-
-                    </h3>
-
-
-                    <div
-                        class="flex
-                               gap-2
-                               text-[10px]
-                               text-[#918a80]">
-
-                        <b class="text-gold2">
-                            ★ 4.8
-                        </b>
-
-                        <span>•</span>
-
-                        <span>
-                            20–30 min
-                        </span>
-
-                    </div>
-
-
-                    <div
-                        class="mt-[14px]
-                               flex
-                               justify-between
-                               border-t
-                               border-white/[.06]
-                               pt-3
-                               text-[9px]">
-
-                        <span>
-                            Bangla · Homemade
-                        </span>
-
-                        <em
-                            class="font-extrabold
-                                   not-italic
-                                   text-greenNoor">
-
-                            ৳20 delivery
-
-                        </em>
-
-                    </div>
-
-                </div>
-
-            </article>
+            @endforelse
 
         </div>
-
     </div>
-
 </section>
+
 
 
 <!-- ========================================================= -->
 <!-- FOOD -->
 <!-- ========================================================= -->
 
-<section
-    class="border-t
-           border-white/[.055]
-           py-[105px]
-           max-[680px]:py-[75px]">
+@php
+    // Provided by RestaurantController@index. Falls back to an empty list instead of crashing.
+    $featured = $featuredItems ?? collect();
+    $foodImage = fn ($path) => $path ? asset('storage/' . ltrim($path, '/')) : null;
+    $formatPrice = fn ($v) => '৳' . ((float) $v == floor((float) $v) ? number_format((float) $v) : number_format((float) $v, 2));
+@endphp
 
+<section class="border-t border-white/[.055] py-[105px] max-[680px]:py-[75px]">
 
-    <div
-        class="mx-auto
-               w-[min(1240px,calc(100%-48px))]
-               max-[680px]:w-[calc(100%-30px)]">
+    <div class="mx-auto w-[min(1240px,calc(100%-48px))] max-[680px]:w-[calc(100%-30px)]">
 
-
-        <div
-            class="mb-8
-                   flex
-                   items-end
-                   justify-between
-                   max-[680px]:block">
-
+        <div class="mb-8 flex items-end justify-between max-[680px]:block">
 
             <div>
-
-                <div
-                    class="flex
-                           items-center
-                           gap-[10px]
-                           text-[10px]
-                           font-extrabold
-                           uppercase
-                           tracking-[.2em]
-                           text-gold2">
-
-                    <span
-                        class="h-px
-                               w-[27px]
-                               bg-gold">
-                    </span>
-
+                <div class="flex items-center gap-[10px] text-[10px] font-extrabold uppercase tracking-[.2em] text-gold2">
+                    <span class="h-px w-[27px] bg-gold"></span>
                     Most loved this week
-
                 </div>
 
-
-                <h2
-                    class="mt-3
-                           font-serifNoor
-                           text-[clamp(35px,5vw,60px)]
-                           leading-[.95]
-                           tracking-[-.06em]">
-
+                <h2 class="mt-3 font-serifNoor text-[clamp(35px,5vw,60px)] leading-[.95] tracking-[-.06em]">
                     The dishes<br/>
                     people return for.
-
                 </h2>
-
             </div>
 
-
-            <a
-                href="#discover"
-                class="border-b
-                       border-white/[.28]
-                       pb-2
-                       text-[10px]
-                       uppercase
-                       tracking-[.1em]">
-
+            <a href="#discover" class="border-b border-white/[.28] pb-2 text-[10px] uppercase tracking-[.1em]">
                 See the full menu
-
             </a>
 
         </div>
 
-
-        <div
-            class="grid
-                   grid-cols-4
-                   gap-[15px]
-                   max-[950px]:grid-cols-2
-                   max-[680px]:grid-cols-2
-                   max-[680px]:gap-[10px]">
-
-
-            <!-- FOOD 1 -->
-
-            <article
-                data-search="kacchi biryani notun bazar biryani house"
-                class="group
-                       overflow-hidden
-                       rounded-[22px]
-                       border
-                       border-white/[.075]
-                       bg-[#191815]
-                       transition
-                       duration-300
-                       hover:-translate-y-[7px]">
-
-
-                <div
-                    class="relative
-                           h-[240px]
-                           overflow-hidden
-                           max-[680px]:h-[170px]">
-
-                    <img
-                        class="h-full
-                               w-full
-                               object-cover
-                               transition
-                               duration-500
-                               group-hover:scale-[1.07]"
-                        src="https://images.unsplash.com/photo-1563379091339-03246963d51a?auto=format&fit=crop&w=1000&q=88"
-                        alt="Kacchi Biryani"
-                    />
-
-
-                    <span
-                        class="absolute
-                               left-[13px]
-                               top-[13px]
-                               rounded-[6px]
-                               bg-gold
-                               px-2
-                               py-[6px]
-                               text-[9px]
-                               font-extrabold
-                               text-night">
-
-                        EDITOR’S PICK
-
-                    </span>
-
-
-                    <button
-                        data-add
-                        type="button"
-                        class="absolute
-                               bottom-3
-                               right-3
-                               grid
-                               h-9
-                               w-9
-                               place-items-center
-                               rounded-[11px]
-                               bg-white
-                               text-night
-                               shadow-[0_7px_18px_#0004]">
-
-                        <i data-lucide="plus"></i>
-
-                    </button>
-
-                </div>
-
-
-                <div class="p-4">
-
-                    <div
-                        class="text-[10px]
-                               text-[#918a80]">
-
-                        Notun Bazar Biryani House
-
-                    </div>
-
-
-                    <h3
-                        class="mt-2
-                               font-serifNoor
-                               text-[19px]">
-
-                        Kacchi Biryani
-
-                    </h3>
-
-
-                    <div
-                        class="mt-[14px]
-                               flex
-                               justify-between">
-
-                        <span class="font-extrabold">
-                            ৳320
-                        </span>
-
-                        <span class="text-[10px]">
-                            ★ 4.9
-                        </span>
-
-                    </div>
-
-                </div>
-
-            </article>
-
-
-            <!-- FOOD 2 -->
-
-            <article
-                data-search="fuchka plate street food"
-                class="group
-                       overflow-hidden
-                       rounded-[22px]
-                       border
-                       border-white/[.075]
-                       bg-[#191815]
-                       transition
-                       duration-300
-                       hover:-translate-y-[7px]">
-
-
-                <div
-                    class="relative
-                           h-[240px]
-                           overflow-hidden
-                           max-[680px]:h-[170px]">
-
-                    <img
-                        class="h-full
-                               w-full
-                               object-cover
-                               transition
-                               duration-500
-                               group-hover:scale-[1.07]"
-                        src="https://images.unsplash.com/photo-1601050690117-94f5f6fa8bd7?auto=format&fit=crop&w=900&q=85"
-                        alt="Fuchka Plate"
-                    />
-
-
-                    <button
-                        data-add
-                        type="button"
-                        class="absolute
-                               bottom-3
-                               right-3
-                               grid
-                               h-9
-                               w-9
-                               place-items-center
-                               rounded-[11px]
-                               bg-white
-                               text-night">
-
-                        <i data-lucide="plus"></i>
-
-                    </button>
-
-                </div>
-
-
-                <div class="p-4">
-
-                    <div
-                        class="text-[10px]
-                               text-[#918a80]">
-
-                        Street Food
-
-                    </div>
-
-
-                    <h3
-                        class="mt-2
-                               font-serifNoor
-                               text-[19px]">
-
-                        Fuchka Plate
-
-                    </h3>
-
-
-                    <div
-                        class="mt-[14px]
-                               flex
-                               justify-between">
-
-                        <span class="font-extrabold">
-                            ৳80
-                        </span>
-
-                        <span class="text-[10px]">
-                            ★ 4.8
-                        </span>
-
-                    </div>
-
-                </div>
-
-            </article>
-
-
-            <!-- FOOD 3 -->
-
-            <article
-                data-search="chui jhal chicken bhorta ghor"
-                class="group
-                       overflow-hidden
-                       rounded-[22px]
-                       border
-                       border-white/[.075]
-                       bg-[#191815]
-                       transition
-                       duration-300
-                       hover:-translate-y-[7px]">
-
-
-                <div
-                    class="relative
-                           h-[240px]
-                           overflow-hidden
-                           max-[680px]:h-[170px]">
-
-                    <img
-                        class="h-full
-                               w-full
-                               object-cover
-                               transition
-                               duration-500
-                               group-hover:scale-[1.07]"
-                        src="https://images.unsplash.com/photo-1598103442097-8b74394b95c6?auto=format&fit=crop&w=900&q=85"
-                        alt="Chui Jhal Chicken"
-                    />
-
-
-                    <button
-                        data-add
-                        type="button"
-                        class="absolute
-                               bottom-3
-                               right-3
-                               grid
-                               h-9
-                               w-9
-                               place-items-center
-                               rounded-[11px]
-                               bg-white
-                               text-night">
-
-                        <i data-lucide="plus"></i>
-
-                    </button>
-
-                </div>
-
-
-                <div class="p-4">
-
-                    <div
-                        class="text-[10px]
-                               text-[#918a80]">
-
-                        Bhorta Ghor
-
-                    </div>
-
-
-                    <h3
-                        class="mt-2
-                               font-serifNoor
-                               text-[19px]">
-
-                        Chui Jhal Chicken
-
-                    </h3>
-
-
-                    <div
-                        class="mt-[14px]
-                               flex
-                               justify-between">
-
-                        <span class="font-extrabold">
-                            ৳240
-                        </span>
-
-                        <span class="text-[10px]">
-                            ★ 4.7
-                        </span>
-
-                    </div>
-
-                </div>
-
-            </article>
-
-
-            <!-- FOOD 4 -->
-
-            <article
-                data-search="roshogolla sweet corner sweet"
-                class="group
-                       overflow-hidden
-                       rounded-[22px]
-                       border
-                       border-white/[.075]
-                       bg-[#191815]
-                       transition
-                       duration-300
-                       hover:-translate-y-[7px]">
-
-
-                <div
-                    class="relative
-                           h-[240px]
-                           overflow-hidden
-                           max-[680px]:h-[170px]">
-
-                    <img
-                        class="h-full
-                               w-full
-                               object-cover
-                               transition
-                               duration-500
-                               group-hover:scale-[1.07]"
-                        src="https://images.unsplash.com/photo-1601303516534-6d6d7c4f2b55?auto=format&fit=crop&w=900&q=85"
-                        alt="Roshogolla"
-                    />
-
-
-                    <span
-                        class="absolute
-                               left-[13px]
-                               top-[13px]
-                               rounded-[6px]
-                               bg-gold
-                               px-2
-                               py-[6px]
-                               text-[9px]
-                               font-extrabold
-                               text-night">
-
-                        NEW
-
-                    </span>
-
-
-                    <button
-                        data-add
-                        type="button"
-                        class="absolute
-                               bottom-3
-                               right-3
-                               grid
-                               h-9
-                               w-9
-                               place-items-center
-                               rounded-[11px]
-                               bg-white
-                               text-night">
-
-                        <i data-lucide="plus"></i>
-
-                    </button>
-
-                </div>
-
-
-                <div class="p-4">
-
-                    <div
-                        class="text-[10px]
-                               text-[#918a80]">
-
-                        Sweet Corner
-
-                    </div>
-
-
-                    <h3
-                        class="mt-2
-                               font-serifNoor
-                               text-[19px]">
-
-                        Roshogolla
-
-                    </h3>
-
-
-                    <div
-                        class="mt-[14px]
-                               flex
-                               justify-between">
-
-                        <span class="font-extrabold">
-                            ৳120
-                        </span>
-
-                        <span class="text-[10px]">
-                            ★ 4.9
-                        </span>
-
-                    </div>
-
-                </div>
-
-            </article>
-
-        </div>
+        @if ($featured->isEmpty())
+
+            {{-- Nothing to show yet --}}
+            <div class="rounded-[22px] border border-white/[.075] bg-[#191815] px-6 py-16 text-center">
+                <span class="mx-auto grid h-14 w-14 place-items-center rounded-2xl border border-gold/20 bg-gold/10 text-gold">
+                    <i data-lucide="utensils"></i>
+                </span>
+                <p class="mt-4 font-serifNoor text-[19px]">No dishes to show yet</p>
+                <p class="mx-auto mt-2 max-w-sm text-[11px] leading-6 text-[#918a80]">
+                    Fresh dishes from our restaurants will appear here as soon as they are added.
+                </p>
+            </div>
+
+        @else
+
+            <div class="grid grid-cols-4 gap-[15px] max-[950px]:grid-cols-2 max-[680px]:grid-cols-2 max-[680px]:gap-[10px]">
+
+                @foreach ($featured as $item)
+                    @php
+                        $img = $foodImage($item->image);
+                        $isNew = $item->created_at && $item->created_at->gt(now()->subDays(14));
+                    @endphp
+
+                    <article
+                        data-search="{{ \Illuminate\Support\Str::lower($item->name . ' ' . $item->restaurant->name) }}"
+                        class="group relative overflow-hidden rounded-[22px] border border-white/[.075] bg-[#191815] transition duration-300 hover:-translate-y-[7px]">
+
+                        <div class="relative h-[240px] overflow-hidden max-[680px]:h-[170px]">
+
+                            @if ($img)
+                                <img class="h-full w-full object-cover transition duration-500 group-hover:scale-[1.07]"
+                                     src="{{ $img }}" alt="{{ $item->name }}" loading="lazy"/>
+                            @else
+                                <div class="grid h-full w-full place-items-center bg-gradient-to-br from-[#24251e] to-[#11120f] text-gold">
+                                    <i data-lucide="utensils"></i>
+                                </div>
+                            @endif
+
+                            @if ($isNew)
+                                <span class="absolute left-[13px] top-[13px] rounded-[6px] bg-gold px-2 py-[6px] text-[9px] font-extrabold text-night">NEW</span>
+                            @endif
+
+                            {{-- z-10 keeps the Add button above the card link, so it never opens the details page --}}
+                            <button data-add data-menu-item-id="{{ $item->id }}" type="button"
+                                    aria-label="Add {{ $item->name }} to bag"
+                                    class="absolute bottom-3 right-3 z-10 grid h-9 w-9 place-items-center rounded-[11px] bg-white text-night shadow-[0_7px_18px_#0004]">
+                                <i data-lucide="plus"></i>
+                            </button>
+
+                        </div>
+
+                        <div class="p-4">
+
+                            <div class="text-[10px] text-[#918a80]">
+                                <a href="{{ route('restaurants.show', $item->restaurant) }}"
+                                   class="relative z-10 transition hover:text-gold2">{{ $item->restaurant->name }}</a>
+                            </div>
+
+                            <h3 class="mt-2 font-serifNoor text-[19px]">
+                                {{-- Stretched link: the whole card (image + text) opens the food page --}}
+                                <a href="{{ route('foods.show', $item) }}"
+                                   class="outline-none after:absolute after:inset-0 after:rounded-[22px] after:content-[''] focus-visible:after:ring-2 focus-visible:after:ring-gold2">{{ $item->name }}</a>
+                            </h3>
+
+                            <div class="mt-[14px] flex justify-between">
+                                <span class="font-extrabold">{{ $formatPrice($item->price) }}</span>
+                            </div>
+
+                        </div>
+
+                    </article>
+                @endforeach
+
+            </div>
+
+        @endif
 
     </div>
 

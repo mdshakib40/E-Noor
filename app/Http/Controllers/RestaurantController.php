@@ -179,4 +179,31 @@ class RestaurantController extends Controller
             ->route('resturent.restaurant.edit')
             ->with('success', 'Restaurant details updated successfully.');
     }
+
+    /**
+     * Show public restaurant details.
+     */
+    public function show(Restaurant $restaurant)
+    {
+        if ($restaurant->status !== 'active') {
+            abort(404);
+        }
+
+        return view('resturent.show', compact('restaurant'));
+    }
+
+    public function index()
+    {
+        $restaurants = \App\Models\Restaurant::where('status', 'active')
+            ->latest()
+            ->get();
+
+        $featuredItems = \App\Models\MenuItem::visible()
+            ->with('restaurant')
+            ->latest()
+            ->take(4)
+            ->get();
+
+        return view('index', compact('restaurants', 'featuredItems'));
+    }
 }
