@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>NOOR — Storefront Admin</title>
+<title>NOOR — Super Admin Dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet" />
@@ -45,7 +45,7 @@ button,select{font:inherit}button{cursor:pointer}a{text-decoration:none;color:in
 .period i{width:13px;color:var(--gold)}
 .date-menu{position:absolute;right:0;top:44px;background:#1b1d18;border:1px solid var(--line2);border-radius:10px;box-shadow:0 14px 40px #0009;display:none;z-index:180;overflow:hidden;min-width:140px}
 .date-menu.open{display:block}
-.date-option{display:block;width:100%;text-align:left;background:none;border:0;color:#b9b1a7;padding:10px 12px;font-size:9px}
+.date-option{display:block;width:100%;text-align:left;background:none;border:0;color:#b9b1a7;padding:10px 12px;font-size:9px;text-decoration:none}
 .date-option:hover{background:#ffffff08;color:var(--gold2)}
 .top-button{width:36px;height:36px;border:1px solid var(--line);border-radius:50%;background:transparent;color:#c5beb3;display:grid;place-items:center}
 .top-button i{width:16px}
@@ -270,7 +270,7 @@ td,th{padding-left:12px;padding-right:12px}
                 Orders
 
                 <span class="nav-count">
-                    12
+                    {{ $ordersCount }}
                 </span>
             </a>
 
@@ -332,11 +332,11 @@ td,th{padding-left:12px;padding-right:12px}
 
             <div class="system-head">
                 <span class="pulse"></span>
-                Everything is live
+                Live database overview
             </div>
 
             <p>
-                Orders are moving normally across NOOR.
+                Dashboard figures are loaded from your database.
             </p>
 
         </div>
@@ -432,29 +432,9 @@ td,th{padding-left:12px;padding-right:12px}
                         class="date-menu"
                         id="dateMenu">
 
-                        <button
-                            class="date-option"
-                            data-range="7">
-
-                            Last 7 days
-
-                        </button>
-
-                        <button
-                            class="date-option"
-                            data-range="30">
-
-                            Last 30 days
-
-                        </button>
-
-                        <button
-                            class="date-option"
-                            data-range="90">
-
-                            Last 90 days
-
-                        </button>
+                        <a class="date-option" href="{{ route('admin.dashboard', ['range' => 7]) }}">Last 7 days</a>
+                        <a class="date-option" href="{{ route('admin.dashboard', ['range' => 30]) }}">Last 30 days</a>
+                        <a class="date-option" href="{{ route('admin.dashboard', ['range' => 90]) }}">Last 90 days</a>
 
                     </div>
 
@@ -697,7 +677,7 @@ td,th{padding-left:12px;padding-right:12px}
                 </span>
 
                 <strong>
-                    Last updated just now
+                    Updated {{ now()->format("M d, Y · h:i A") }}
                 </strong>
 
             </div>
@@ -716,20 +696,20 @@ td,th{padding-left:12px;padding-right:12px}
 
                 <div class="stat-header">
 
-                    Platform revenue
+                    Order value
 
                     <i data-lucide="wallet-cards"></i>
 
                 </div>
 
                 <div class="stat-value">
-                    ৳8,42,680
+                    ৳{{ number_format($platformRevenue, 2) }}
                 </div>
 
                 <div class="stat-meta">
-                    ↑ 18.4%
+                    Database total
                     <span>
-                        vs last week
+                        non-cancelled orders
                     </span>
                 </div>
 
@@ -747,13 +727,13 @@ td,th{padding-left:12px;padding-right:12px}
                 </div>
 
                 <div class="stat-value">
-                    1,284
+                    {{ number_format($ordersCount) }}
                 </div>
 
                 <div class="stat-meta">
-                    ↑ 12.8%
+                    Live
                     <span>
-                        vs last week
+                        recorded orders
                     </span>
                 </div>
 
@@ -771,13 +751,13 @@ td,th{padding-left:12px;padding-right:12px}
                 </div>
 
                 <div class="stat-value">
-                    86
+                    {{ number_format($restaurantsCount) }}
                 </div>
 
                 <div class="stat-meta">
-                    ↑ 5
+                    Live
                     <span>
-                        this month
+                        registered restaurants
                     </span>
                 </div>
 
@@ -795,7 +775,7 @@ td,th{padding-left:12px;padding-right:12px}
                 </div>
 
                 <div class="stat-value">
-                    {{ $users->where('role', UserRole::CUSTOMER)->count() }}
+                    {{ number_format($customersCount) }}
                 </div>
 
                 <div class="stat-meta">
@@ -826,11 +806,11 @@ td,th{padding-left:12px;padding-right:12px}
                     <div>
 
                         <div class="card-title">
-                            Revenue overview
+                            Order value overview
                         </div>
 
                         <div class="card-sub">
-                            Platform performance · last 7 days
+                            Order activity · last {{ $rangeDays }} days
                         </div>
 
                     </div>
@@ -854,17 +834,9 @@ td,th{padding-left:12px;padding-right:12px}
                         </div>
 
 
-                        <select class="card-select">
-
-                            <option>
-                                Last 7 days
-                            </option>
-
-                            <option>
-                                Last 30 days
-                            </option>
-
-                        </select>
+                        <a class="card-select" href="{{ route('admin.dashboard', ['range' => $rangeDays === 7 ? 30 : 7]) }}" style="text-decoration:none">
+                            Switch to last {{ $rangeDays === 7 ? 30 : 7 }} days
+                        </a>
 
                     </div>
 
@@ -873,28 +845,16 @@ td,th{padding-left:12px;padding-right:12px}
 
                 <div class="chart">
 
+                    @php
+                        $chartMaxRevenue = max(1, (float) $dailyStats->max('revenue'));
+                    @endphp
+
                     <div class="chart-grid">
-
-                        <span>
-                            <small>৳200k</small>
-                        </span>
-
-                        <span>
-                            <small>৳150k</small>
-                        </span>
-
-                        <span>
-                            <small>৳100k</small>
-                        </span>
-
-                        <span>
-                            <small>৳50k</small>
-                        </span>
-
-                        <span>
-                            <small>৳0</small>
-                        </span>
-
+                        @foreach([1, .75, .5, .25, 0] as $scale)
+                            <span>
+                                <small>৳{{ number_format($chartMaxRevenue * $scale, 0) }}</small>
+                            </span>
+                        @endforeach
                     </div>
 
 
@@ -926,37 +886,26 @@ td,th{padding-left:12px;padding-right:12px}
                         </defs>
 
 
-                        <path
-                            d="M0 165 C45 155 70 120 115 135 S185 108 225 118 S290 76 335 95 S395 48 440 72 S500 55 545 65 S610 28 650 48 S725 18 800 30 L800 210 L0 210Z"
-                            fill="url(#goldFill)"/>
+                        @php
+                            $maxRevenue = max(1, (float) $dailyStats->max('revenue'));
+                            $maxOrders = max(1, (float) $dailyStats->max('orders'));
+                            $revenuePoints = $dailyStats->values()->map(fn ($day, $i) => ($i * (800 / max(1, $dailyStats->count() - 1))) . ',' . (190 - ((float) $day->revenue / $maxRevenue * 165)))->implode(' ');
+                            $orderPoints = $dailyStats->values()->map(fn ($day, $i) => ($i * (800 / max(1, $dailyStats->count() - 1))) . ',' . (190 - ((float) $day->orders / $maxOrders * 120)))->implode(' ');
+                            $revenueArea = '0,210 ' . $revenuePoints . ' 800,210';
+                        @endphp
 
-
-                        <path
-                            d="M0 165 C45 155 70 120 115 135 S185 108 225 118 S290 76 335 95 S395 48 440 72 S500 55 545 65 S610 28 650 48 S725 18 800 30"
-                            fill="none"
-                            stroke="#d7a858"
-                            stroke-width="3"/>
-
-
-                        <path
-                            d="M0 181 C45 174 70 157 115 166 S185 145 225 156 S290 127 335 138 S395 116 440 132 S500 113 545 122 S610 98 650 109 S725 86 800 95"
-                            fill="none"
-                            stroke="#b8d985"
-                            stroke-width="2"
-                            stroke-dasharray="4 4"/>
+                        <polygon points="{{ $revenueArea }}" fill="url(#goldFill)"/>
+                        <polyline points="{{ $revenuePoints }}" fill="none" stroke="#d7a858" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+                        <polyline points="{{ $orderPoints }}" fill="none" stroke="#b8d985" stroke-width="2" stroke-dasharray="4 4" stroke-linejoin="round" stroke-linecap="round"/>
 
                     </svg>
 
 
                     <div class="chart-days">
 
-                        <span>MON</span>
-                        <span>TUE</span>
-                        <span>WED</span>
-                        <span>THU</span>
-                        <span>FRI</span>
-                        <span>SAT</span>
-                        <span>SUN</span>
+                        @foreach($dailyStats as $day)
+                            <span>{{ strtoupper($day->label) }}</span>
+                        @endforeach
 
                     </div>
 
@@ -991,12 +940,12 @@ td,th{padding-left:12px;padding-right:12px}
 
                 <div class="donut-row">
 
-                    <div class="donut">
+                    <div class="donut" style="background: {{ $orderMixStyle }}">
 
                         <div class="donut-inner">
 
                             <strong>
-                                1,284
+                                {{ number_format($ordersCount) }}
                             </strong>
 
                             <span>
@@ -1010,42 +959,23 @@ td,th{padding-left:12px;padding-right:12px}
 
                     <div class="mix-items">
 
-                        <div class="mix-item">
-
-                            <i></i>
-                            Delivered
-                            <b>57%</b>
-
-                        </div>
-
-                        <div class="mix-item">
-
-                            <i class="mint"></i>
-                            In progress
-                            <b>27%</b>
-
-                        </div>
-
-                        <div class="mix-item">
-
-                            <i class="grey"></i>
-                            Cancelled
-                            <b>16%</b>
-
-                        </div>
+                        @forelse($orderStatusStats as $statusStat)
+                            <div class="mix-item">
+                                <i class="{{ $statusStat->class }}"></i>
+                                {{ $statusStat->label }}
+                                <b>{{ $statusStat->percent }}%</b>
+                            </div>
+                        @empty
+                            <div class="mix-item">No order status data</div>
+                        @endforelse
 
                     </div>
 
                 </div>
 
-
                 <div class="mix-insight">
-
-                    <b>Good signal.</b>
-
-                    Completion is up 9.6%
-                    since last Tuesday.
-
+                    <b>Live database summary.</b>
+                    Status percentages are calculated from recorded orders.
                 </div>
 
             </section>
@@ -1075,9 +1005,7 @@ td,th{padding-left:12px;padding-right:12px}
 
                 </div>
 
-                <button class="view-all">
-                    View all orders →
-                </button>
+                <span class="card-sub">{{ $ordersCount }} total orders</span>
 
             </div>
 
@@ -1116,174 +1044,25 @@ td,th{padding-left:12px;padding-right:12px}
 
 
                     <tbody>
-
-                        <tr>
-
-                            <td>
-                                <b>#NO-8421</b>
-                                <span class="order-id">
-                                    2 min ago
-                                </span>
-                            </td>
-
-                            <td>
-                                <div class="customer">
-
-                                    <span class="mini-avatar">
-                                        SA
-                                    </span>
-
-                                    Sarah Ahmed
-
-                                </div>
-                            </td>
-
-                            <td>
-                                Rong Kitchen
-                            </td>
-
-                            <td>
-                                <span class="status blue">
-                                    <i></i>
-                                    On the way
-                                </span>
-                            </td>
-
-                            <td class="amount">
-                                ৳1,240
-                            </td>
-
-                        </tr>
-
-
-                        <tr>
-
-                            <td>
-                                <b>#NO-8420</b>
-                                <span class="order-id">
-                                    5 min ago
-                                </span>
-                            </td>
-
-                            <td>
-                                <div class="customer">
-
-                                    <span
-                                        class="mini-avatar"
-                                        style="background:#654c3b">
-
-                                        MR
-
-                                    </span>
-
-                                    Mahin Rahman
-
-                                </div>
-                            </td>
-
-                            <td>
-                                Kacchi Bhai
-                            </td>
-
-                            <td>
-                                <span class="status gold">
-                                    <i></i>
-                                    Preparing
-                                </span>
-                            </td>
-
-                            <td class="amount">
-                                ৳820
-                            </td>
-
-                        </tr>
-
-
-                        <tr>
-
-                            <td>
-                                <b>#NO-8419</b>
-                                <span class="order-id">
-                                    8 min ago
-                                </span>
-                            </td>
-
-                            <td>
-                                <div class="customer">
-
-                                    <span
-                                        class="mini-avatar"
-                                        style="background:#3f5a50">
-
-                                        NI
-
-                                    </span>
-
-                                    Nabila Islam
-
-                                </div>
-                            </td>
-
-                            <td>
-                                Grill Room
-                            </td>
-
-                            <td>
-                                <span class="status green">
-                                    <i></i>
-                                    Delivered
-                                </span>
-                            </td>
-
-                            <td class="amount">
-                                ৳1,560
-                            </td>
-
-                        </tr>
-
-
-                        <tr>
-
-                            <td>
-                                <b>#NO-8418</b>
-                                <span class="order-id">
-                                    13 min ago
-                                </span>
-                            </td>
-
-                            <td>
-                                <div class="customer">
-
-                                    <span
-                                        class="mini-avatar"
-                                        style="background:#58425e">
-
-                                        RA
-
-                                    </span>
-
-                                    Rafi Ahmed
-
-                                </div>
-                            </td>
-
-                            <td>
-                                Bhorta Ghor
-                            </td>
-
-                            <td>
-                                <span class="status green">
-                                    <i></i>
-                                    Delivered
-                                </span>
-                            </td>
-
-                            <td class="amount">
-                                ৳480
-                            </td>
-
-                        </tr>
-
+                        @forelse($recentOrders as $order)
+                            <tr>
+                                <td>
+                                    <b>#{{ $order->display_id }}</b>
+                                    <span class="order-id">{{ $order->created_at ? $order->created_at->diffForHumans() : '—' }}</span>
+                                </td>
+                                <td>
+                                    <div class="customer">
+                                        <span class="mini-avatar">{{ strtoupper(substr($order->customer_name ?: 'GU', 0, 2)) }}</span>
+                                        {{ $order->customer_name ?: 'Guest customer' }}
+                                    </div>
+                                </td>
+                                <td>{{ $order->restaurant_name ?: '—' }}</td>
+                                <td><span class="status {{ $order->status_class }}"><i></i>{{ $order->status_label }}</span></td>
+                                <td class="amount">৳{{ number_format((float) $order->amount, 2) }}</td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="5" style="text-align:center;padding:30px;color:#777">No orders found in the database.</td></tr>
+                        @endforelse
                     </tbody>
 
                 </table>
@@ -1618,7 +1397,7 @@ td,th{padding-left:12px;padding-right:12px}
                         </div>
 
                         <div class="card-sub">
-                            Revenue this week
+                            Order value this week
                         </div>
 
                     </div>
@@ -1632,122 +1411,20 @@ td,th{padding-left:12px;padding-right:12px}
 
 
                 <div class="restaurant-list">
-
-                    <div class="rank-row">
-
-                        <span class="rank-num">
-                            01
-                        </span>
-
-                        <div class="rank-info">
-
-                            <div class="rank-info-top">
-
-                                <strong>
-                                    Rong Kitchen
-                                </strong>
-
-                                <span>
-                                    ৳1,82,400
-                                </span>
-
+                    @forelse($topRestaurants as $index => $restaurant)
+                        <div class="rank-row">
+                            <span class="rank-num">{{ str_pad($index + 1, 2, '0', STR_PAD_LEFT) }}</span>
+                            <div class="rank-info">
+                                <div class="rank-info-top">
+                                    <strong>{{ $restaurant->name }}</strong>
+                                    <span>৳{{ number_format((float) $restaurant->revenue, 2) }}</span>
+                                </div>
+                                <div class="progress"><i style="width:{{ $restaurant->bar_percent }}%"></i></div>
                             </div>
-
-                            <div class="progress">
-                                <i style="width:92%"></i>
-                            </div>
-
                         </div>
-
-                    </div>
-
-
-                    <div class="rank-row">
-
-                        <span class="rank-num">
-                            02
-                        </span>
-
-                        <div class="rank-info">
-
-                            <div class="rank-info-top">
-
-                                <strong>
-                                    Kacchi Bhai
-                                </strong>
-
-                                <span>
-                                    ৳1,46,820
-                                </span>
-
-                            </div>
-
-                            <div class="progress">
-                                <i style="width:78%"></i>
-                            </div>
-
-                        </div>
-
-                    </div>
-
-
-                    <div class="rank-row">
-
-                        <span class="rank-num">
-                            03
-                        </span>
-
-                        <div class="rank-info">
-
-                            <div class="rank-info-top">
-
-                                <strong>
-                                    Grill Room
-                                </strong>
-
-                                <span>
-                                    ৳1,19,500
-                                </span>
-
-                            </div>
-
-                            <div class="progress">
-                                <i style="width:65%"></i>
-                            </div>
-
-                        </div>
-
-                    </div>
-
-
-                    <div class="rank-row">
-
-                        <span class="rank-num">
-                            04
-                        </span>
-
-                        <div class="rank-info">
-
-                            <div class="rank-info-top">
-
-                                <strong>
-                                    Bhorta Ghor
-                                </strong>
-
-                                <span>
-                                    ৳98,240
-                                </span>
-
-                            </div>
-
-                            <div class="progress">
-                                <i style="width:53%"></i>
-                            </div>
-
-                        </div>
-
-                    </div>
-
+                    @empty
+                        <p class="card-sub">No restaurant order data available yet.</p>
+                    @endforelse
                 </div>
 
             </section>
@@ -1780,118 +1457,18 @@ td,th{padding-left:12px;padding-right:12px}
 
 
                 <div class="rider-list">
-
-                    <div class="rider-row">
-
-                        <span class="rider-avatar">
-                            RK
-                        </span>
-
-                        <div class="rider-info">
-
-                            <strong>
-                                Riyad Khan
-                            </strong>
-
-                            <span>
-                                Gulshan route · 3 orders
-                            </span>
-
+                    @forelse($riders as $rider)
+                        <div class="rider-row">
+                            <span class="rider-avatar">{{ strtoupper(substr($rider->name, 0, 2)) }}</span>
+                            <div class="rider-info">
+                                <strong>{{ $rider->name }}</strong>
+                                <span>{{ $rider->active_order_count }} active {{ $rider->active_order_count === 1 ? 'order' : 'orders' }}</span>
+                            </div>
+                            <span class="rider-state {{ $rider->active_order_count > 0 ? 'busy' : '' }}">{{ $rider->active_order_count > 0 ? 'Delivering' : 'Available' }}</span>
                         </div>
-
-                        <span class="rider-state">
-                            Available
-                        </span>
-
-                    </div>
-
-
-                    <div class="rider-row">
-
-                        <span
-                            class="rider-avatar"
-                            style="background:#4b4355">
-
-                            JM
-
-                        </span>
-
-                        <div class="rider-info">
-
-                            <strong>
-                                Jahid Mia
-                            </strong>
-
-                            <span>
-                                Dhanmondi route · 2 orders
-                            </span>
-
-                        </div>
-
-                        <span class="rider-state busy">
-                            Delivering
-                        </span>
-
-                    </div>
-
-
-                    <div class="rider-row">
-
-                        <span
-                            class="rider-avatar"
-                            style="background:#544334">
-
-                            AS
-
-                        </span>
-
-                        <div class="rider-info">
-
-                            <strong>
-                                Alim Sheikh
-                            </strong>
-
-                            <span>
-                                Mohammadpur route · 1 order
-                            </span>
-
-                        </div>
-
-                        <span class="rider-state">
-                            Available
-                        </span>
-
-                    </div>
-
-
-                    <div class="rider-row">
-
-                        <span
-                            class="rider-avatar"
-                            style="background:#3e5650">
-
-                            NH
-
-                        </span>
-
-                        <div class="rider-info">
-
-                            <strong>
-                                Noman Hossain
-                            </strong>
-
-                            <span>
-                                Banani route · 4 orders
-                            </span>
-
-                        </div>
-
-                        <span class="rider-state busy">
-                            Delivering
-                        </span>
-
-                    </div>
-
+                    @empty
+                        <p class="card-sub">No rider accounts found.</p>
+                    @endforelse
                 </div>
 
             </section>
@@ -1926,8 +1503,7 @@ td,th{padding-left:12px;padding-right:12px}
 
                     <div class="quote">
 
-                        “Your customers spend more when the evening starts
-                        <em>before 7pm.</em>”
+                        “NOOR currently has <em>{{ number_format($customersCount) }} customers</em> registered.”
 
                     </div>
 
@@ -1936,9 +1512,9 @@ td,th{padding-left:12px;padding-right:12px}
 
                 <div class="note-foot">
 
-                    <b>↑ 18%</b>
+                    <b>{{ number_format($ordersCount) }}</b>
 
-                    average order value between 5–7pm.
+                    orders recorded in the database.
 
                 </div>
 
@@ -2128,7 +1704,7 @@ $("#settingsAction")?.addEventListener(
         closeProfile();
 
         toast(
-            "Settings panel is ready for your workspace preferences"
+            "Settings page is not connected yet"
         );
 
     }
@@ -2228,7 +1804,7 @@ const setRange = (days) => {
 };
 
 
-setRange(7);
+setRange({{ $rangeDays }});
 
 
 $("#todayLabel").textContent =
@@ -2259,26 +1835,8 @@ $("#dateRange")?.addEventListener(
 );
 
 
-$$(".date-option").forEach((b) => {
-
-    b.addEventListener("click", () => {
-
-        const days =
-            Number(b.dataset.range);
-
-        setRange(days);
-
-        dateMenu?.classList.remove(
-            "open"
-        );
-
-        toast(
-            `Showing last ${days} days`
-        );
-
-    });
-
-});
+// Date-range links reload the dashboard so the chart uses real database data.
+// The selected range is supplied by the Laravel controller.
 
 
 /*
@@ -2315,5 +1873,4 @@ $("#userSearch")?.addEventListener(
 </script>
 
 </body>
-</html>
 </html>

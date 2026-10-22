@@ -14,6 +14,9 @@ use App\Http\Controllers\CartController;
 use App\Http\Controllers\CartPageController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\Rider\RiderController;
+use App\Http\Controllers\AdminDashboardController;
+use App\Http\Controllers\Customer\OrderTrackingController;
+use App\Http\Controllers\RestaurantDashboardController;
 use App\Enums\UserRole;
 use App\Models\Restaurant;
 use App\Models\Order;
@@ -168,9 +171,14 @@ Route::get('/customer/orders/{order}', function (Order $order) {
 
     return view('customer.orders.show', compact('order'));
 })->name('customer.orders.show');
+Route::get(
+    '/customer/orders/{order}/tracking',
+    [OrderTrackingController::class, 'show']
+)->whereNumber('order')->name('customer.orders.tracking');
 
 
 });
+
 
 
 
@@ -182,14 +190,10 @@ Route::get('/customer/orders/{order}', function (Order $order) {
 
 Route::middleware(['auth', 'role:super_admin'])->group(function () {
 
-    Route::get('/admin/dashboard', function () {
-
-        $users = \App\Models\User::latest()->get();
-
-        return view('admin.dashboard', compact('users'));
-
-    })->name('admin.dashboard');
-
+    Route::get('/admin/dashboard', [
+        AdminDashboardController::class,
+        'index'
+    ])->name('admin.dashboard');
 
     /*
     |--------------------------------------------------------------------------
@@ -222,6 +226,10 @@ Route::middleware(['auth', 'role:rider'])->prefix('rider')->name('rider.')->grou
     Route::post('/orders/{order}/pickup', [RiderController::class, 'pickup'])->whereNumber('order')->name('orders.pickup');
     Route::post('/orders/{order}/out-for-delivery', [RiderController::class, 'outForDelivery'])->whereNumber('order')->name('orders.out');
     Route::post('/orders/{order}/delivered', [RiderController::class, 'delivered'])->whereNumber('order')->name('orders.delivered');
+    Route::post(
+    '/orders/{order}/location',
+    [RiderController::class, 'updateLocation']
+    )->name('orders.location');
 
 });
 
@@ -237,9 +245,10 @@ Route::middleware([
     'role:restaurant_owner,restaurant_staff'
 ])->group(function () {
 
-    Route::get('/resturent/dashboard', function () {
-        return view('resturent.dashboard');
-    })->name('resturent.dashboard');
+    Route::get('/resturent/dashboard', [
+    RestaurantDashboardController::class,
+    'index'
+])->name('resturent.dashboard');
 
     Route::get('/resturent/menu', [
     \App\Http\Controllers\Resturent\MenuItemController::class,

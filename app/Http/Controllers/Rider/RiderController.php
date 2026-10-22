@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use App\Models\RiderLocation;
 
 class RiderController extends Controller
 {
@@ -439,4 +440,47 @@ class RiderController extends Controller
             'delivered_at' => $this->time($o->delivered_at),
         ];
     }
+    public function updateLocation(Request $request, int $order)
+{
+    $validated = $request->validate([
+        'latitude'  => ['required', 'numeric', 'between:-90,90'],
+        'longitude' => ['required', 'numeric', 'between:-180,180'],
+        'heading'   => ['nullable', 'numeric', 'between:0,360'],
+        'speed'     => ['nullable', 'numeric', 'min:0'],
+    ]);
+
+    $delivery = Order::query()
+        ->whereKey($order)
+        ->where('rider_id', $request->user()->id)
+        ->whereIn('status', [
+            self::PICKED_UP,
+            self::OUT_FOR_DELIVERY,
+        ])
+        ->first();
+
+    if (! $delivery) {
+        return response()->json([
+            'message' => 'Active assigned delivery not found.',
+        ], 403);
+    }
+
+    $location = RiderLocation::updateOrCreate(
+    [
+        'order_id' => $delivery->id,
+        'rider_id' => $request->user()->id,
+    ],
+    [
+        'latitude' => $validated['latitude'],
+        'longitude' => $validated['longitude'],
+        'heading' => $validated['heading'] ?? null,
+        'speed' => $validated['speed'] ?? null,
+        'recorded_at' => now(),
+    ]
+);
+
+    return response()->json([
+        'message' => 'Location updated successfully.',
+        'recorded_at' => $location->recorded_at,
+    ]);
+}
 }

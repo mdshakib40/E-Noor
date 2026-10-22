@@ -32,10 +32,20 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+>
 
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
 
-    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+    
+<link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+>
+<script src="https://unpkg.com/lucide@latest"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <style>
         * {
@@ -339,6 +349,146 @@
                 @endforeach
             </div>
         @endif
+
+        
+{{-- Live Rider Tracking --}}
+@if (true)
+    <section class="mt-8 overflow-hidden rounded-[24px] border border-gold-400/15 bg-[#171610] p-5 sm:p-7">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+            <div>
+                <p class="text-[10px] font-extrabold uppercase tracking-[.18em] text-gold-300">
+                    Live delivery
+                </p>
+                <h3 class="mt-2 font-display text-2xl text-stone-100">
+                    Track your rider
+                </h3>
+                <p id="rider-tracking-message" class="mt-2 text-xs text-stone-400">
+                    Connecting to rider location…
+                </p>
+            </div>
+
+            <span class="rounded-full border border-green-400/20 bg-green-400/[.07] px-3 py-2 text-[10px] font-bold text-green-300">
+                <span class="mr-1 inline-block h-1.5 w-1.5 rounded-full bg-green-300"></span>
+                Live tracking
+            </span>
+        </div>
+
+        <div id="rider-map" class="mt-5 h-[320px] overflow-hidden rounded-2xl border border-white/10 bg-[#22221d] sm:h-[400px]"></div>
+
+        <p id="rider-last-updated" class="mt-3 text-[10px] text-stone-500">
+            Waiting for the first location update…
+        </p>
+    </section>
+
+    @push('styles')
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    @endpush
+
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const mapElement = document.getElementById('rider-map');
+                const message = document.getElementById('rider-tracking-message');
+                const updated = document.getElementById('rider-last-updated');
+
+                if (!mapElement || typeof L === 'undefined') {
+                    message.textContent = 'Map could not load. Check your internet connection.';
+                    return;
+                }
+
+                const map = L.map(mapElement).setView([24.06, 89.33], 13);
+
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; OpenStreetMap contributors',
+                    maxZoom: 19
+                }).addTo(map);
+
+                let marker = null;
+
+                async function refreshLocation() {
+                    try {
+                        const response = await fetch(
+                            @json(route('customer.orders.tracking', $order->getKey())),
+                            {
+                                headers: { 'Accept': 'application/json' },
+                                cache: 'no-store'
+                            }
+                        );
+
+                        if (!response.ok) {
+                            message.textContent = 'Unable to retrieve rider location.';
+                            return;
+                        }
+
+                        const data = await response.json();
+
+                        if (!data.available || !data.location) {
+                            message.textContent = data.message || 'Waiting for rider location…';
+                            return;
+                        }
+
+                        const lat = Number(data.location.latitude);
+                        const lng = Number(data.location.longitude);
+
+                        if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+                            message.textContent = 'Received an invalid rider location.';
+                            return;
+                        }
+
+                        const position = [lat, lng];
+
+                        const riderIcon = L.divIcon({
+    className: '',
+    html: `
+        <div style="
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #E8B45A;
+            border: 3px solid #fff;
+            border-radius: 50%;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.25);
+            color: #1C1410;
+            font-size: 22px;
+        ">
+            <i class="fa-solid fa-motorcycle"></i>
+        </div>
+    `,
+    iconSize: [44, 44],
+    iconAnchor: [22, 22],
+    popupAnchor: [0, -24]
+});
+
+if (!marker) {
+    marker = L.marker(position, {
+        icon: riderIcon
+    }).addTo(map).bindPopup('Your delivery rider');
+
+    map.setView(position, 16);
+} else {
+    marker.setLatLng(position);
+}
+
+                        message.textContent = 'Rider location received successfully.';
+                        updated.textContent = data.location.recorded_at
+                            ? 'Last location update: ' + new Date(data.location.recorded_at).toLocaleTimeString()
+                            : 'Location updated just now';
+
+                    } catch (error) {
+                        console.error('Tracking error:', error);
+                        message.textContent = 'Could not refresh location. Retrying…';
+                    }
+                }
+
+                refreshLocation();
+                setInterval(refreshLocation, 10000);
+            });
+        </script>
+
+@endif
+
 
         <div class="relative mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-white/[.06] pt-4">
             <p class="text-[10px] text-stone-500">

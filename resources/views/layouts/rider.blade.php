@@ -181,6 +181,7 @@
         </main>
     </div>
 </div>
+@yield('scripts')
 
 <script>
     const sidebar = document.getElementById('sidebar');
