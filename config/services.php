@@ -13,6 +13,11 @@ return [
     | a conventional file to locate the various service credentials.
     |
     */
+    'sslcommerz' => [
+    'store_id' => env('SSLCOMMERZ_STORE_ID'),
+    'store_password' => env('SSLCOMMERZ_STORE_PASSWORD'),
+    'sandbox' => env('SSLCOMMERZ_SANDBOX', true),
+],
 
     'postmark' => [
         'key' => env('POSTMARK_API_KEY'),

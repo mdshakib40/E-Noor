@@ -14,7 +14,7 @@ class OrderController extends Controller
     {
         $restaurant = Auth::user()->restaurants()->first();
 
-        if (!$restaurant) {
+        if (! $restaurant) {
             abort(404, 'Restaurant not found.');
         }
 
@@ -33,7 +33,7 @@ class OrderController extends Controller
     {
         $restaurant = Auth::user()->restaurants()->first();
 
-        if (!$restaurant) {
+        if (! $restaurant) {
             abort(404, 'Restaurant not found.');
         }
 
@@ -53,7 +53,7 @@ class OrderController extends Controller
     {
         $restaurant = Auth::user()->restaurants()->first();
 
-        if (!$restaurant) {
+        if (! $restaurant) {
             abort(404, 'Restaurant not found.');
         }
 
@@ -70,6 +70,10 @@ class OrderController extends Controller
 
         $allowedTransitions = [
             'pending' => ['accepted', 'rejected'],
+
+            // Online payment success sets order status to confirmed.
+            'confirmed' => ['accepted', 'rejected'],
+
             'accepted' => ['preparing', 'rejected'],
             'preparing' => ['ready_for_pickup'],
         ];
@@ -77,7 +81,7 @@ class OrderController extends Controller
         $currentStatus = $order->status;
         $newStatus = $validated['status'];
 
-        if (!in_array(
+        if (! in_array(
             $newStatus,
             $allowedTransitions[$currentStatus] ?? [],
             true
@@ -92,7 +96,7 @@ class OrderController extends Controller
         ]);
 
         return redirect()
-    ->route('resturent.orders.show', $order)
-    ->with('success', 'Order status updated successfully.');
+            ->route('resturent.orders.show', $order)
+            ->with('success', 'Order status updated successfully.');
     }
 }

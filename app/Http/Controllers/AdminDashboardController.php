@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\UserRole;
 use App\Models\Order;
 use App\Models\Restaurant;
+use App\Models\RestaurantSettlement;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -13,7 +14,14 @@ class AdminDashboardController extends Controller
 {
     public function index()
     {
-        // User statistics
+        // Dashboard chart range: 7, 30 or 90 days
+        $rangeDays = in_array(
+            (int) request('range', 7),
+            [7, 30, 90],
+            true
+        ) ? (int) request('range', 7) : 7;
+
+        // Users
         $users = User::latest()->get();
 
         $customersCount = User::where(
@@ -26,15 +34,53 @@ class AdminDashboardController extends Controller
             UserRole::RIDER->value
         )->latest()->get();
 
-        // Order statistics
+        // Main statistics
         $ordersCount = Order::count();
-
-        $platformRevenue = (float) Order::sum('total');
 
         $restaurantsCount = Restaurant::count();
 
-        // Recent orders
-        $recentOrders = Order::with('restaurant')
+        // Exclude cancelled and rejected orders from platform revenue
+        $platformRevenue = (float) Order::whereNotIn(
+            'status',
+            ['cancelled', 'rejected']
+        )->sum('total');
+
+        // Online payments
+        $paidOnlineOrders = Order::where(
+            'payment_status',
+            'paid'
+        )
+            ->where('payment_method', 'sslcommerz')
+            ->count();
+
+        // Restaurant commission and settlements
+        $totalRestaurantCommission = (float)
+            RestaurantSettlement::sum('commission_amount');
+
+        $totalRestaurantPayable = (float)
+            RestaurantSettlement::sum('restaurant_amount');
+
+        $pendingSettlementAmount = (float)
+            RestaurantSettlement::where('status', 'pending')
+                ->sum('restaurant_amount');
+
+        $paidSettlementAmount = (float)
+            RestaurantSettlement::where('status', 'paid')
+                ->sum('restaurant_amount');
+
+        $recentSettlements = RestaurantSettlement::with([
+            'restaurant',
+            'order',
+        ])
+            ->latest()
+            ->take(10)
+            ->get();
+
+        // Latest orders
+        $recentOrders = Order::with([
+            'restaurant',
+            'customer',
+        ])
             ->latest()
             ->take(8)
             ->get()
@@ -55,53 +101,62 @@ class AdminDashboardController extends Controller
                     'rejected' => 'Rejected',
                 ];
 
+                // Keep these class names compatible with the
+                // existing dashboard badge styles.
                 $statusClasses = [
-                    'pending' => 'pending',
-                    'confirmed' => 'preparing',
-                    'preparing' => 'preparing',
-                    'ready' => 'preparing',
-                    'out_for_delivery' => 'preparing',
-                    'delivered' => 'delivered',
-                    'completed' => 'delivered',
-                    'cancelled' => 'cancelled',
-                    'rejected' => 'cancelled',
+                    'pending' => 'gold',
+                    'confirmed' => 'blue',
+                    'preparing' => 'blue',
+                    'ready' => 'blue',
+                    'out_for_delivery' => 'blue',
+                    'delivered' => 'green',
+                    'completed' => 'green',
+                    'cancelled' => 'grey',
+                    'rejected' => 'grey',
                 ];
 
                 $order->display_id = $order->order_number
                     ?: $order->id;
 
                 $order->customer_name = $order->customer_name
-                    ?: optional($order->customer)->name;
+                    ?: optional($order->customer)->name
+                    ?: 'Guest';
 
                 $order->restaurant_name = optional(
                     $order->restaurant
-                )->name;
+                )->name ?? 'Unknown restaurant';
 
                 $order->status_label = $statusLabels[$status]
                     ?? ucfirst(str_replace('_', ' ', $status));
 
                 $order->status_class = $statusClasses[$status]
-                    ?? 'pending';
+                    ?? 'gold';
 
                 $order->amount = (float) $order->total;
 
                 return $order;
             });
 
-        // Revenue and order counts for the last 7 days
+        // Revenue and order counts for the selected date range
         $dailyStats = collect();
 
-        for ($i = 6; $i >= 0; $i--) {
+        for ($i = $rangeDays - 1; $i >= 0; $i--) {
             $date = now()->startOfDay()->subDays($i);
 
-            $dayOrders = Order::whereDate(
+            $dayOrders = Order::query()->whereDate(
                 'created_at',
                 $date->toDateString()
             );
 
             $dailyStats->push((object) [
-                'label' => $date->format('D'),
-                'revenue' => (float) (clone $dayOrders)->sum('total'),
+                'label' => $rangeDays === 7
+                    ? $date->format('D')
+                    : $date->format('d M'),
+
+                'revenue' => (float) (clone $dayOrders)
+                    ->whereNotIn('status', ['cancelled', 'rejected'])
+                    ->sum('total'),
+
                 'orders' => (clone $dayOrders)->count(),
             ]);
         }
@@ -124,24 +179,34 @@ class AdminDashboardController extends Controller
             'rejected' => '#625e55',
         ];
 
-        $orderStatusStats = $statusRows->map(function ($row) use (
-            $ordersCount,
-            $statusColors
-        ) {
-            $status = strtolower((string) ($row->status ?? 'pending'));
+        $orderStatusStats = $statusRows->map(
+            function ($row) use ($ordersCount, $statusColors) {
+                $status = strtolower(
+                    (string) ($row->status ?? 'pending')
+                );
 
-            return (object) [
-                'label' => ucfirst(str_replace('_', ' ', $status)),
-                'total' => (int) $row->total,
-                'percent' => $ordersCount > 0
-                    ? (int) round(($row->total / $ordersCount) * 100)
-                    : 0,
-                'class' => 'status-' . $status,
-                'color' => $statusColors[$status] ?? '#625e55',
-            ];
-        });
+                return (object) [
+                    'label' => ucfirst(
+                        str_replace('_', ' ', $status)
+                    ),
 
-        // Build the donut chart from real order status counts
+                    'total' => (int) $row->total,
+
+                    'percent' => $ordersCount > 0
+                        ? (int) round(
+                            ($row->total / $ordersCount) * 100
+                        )
+                        : 0,
+
+                    'class' => 'status-' . $status,
+
+                    'color' => $statusColors[$status]
+                        ?? '#625e55',
+                ];
+            }
+        );
+
+        // Donut chart
         $segments = [];
         $position = 0;
 
@@ -166,13 +231,22 @@ class AdminDashboardController extends Controller
 
         $topRestaurants = Restaurant::query()
             ->leftJoin('orders', function ($join) use ($weekStart) {
-                $join->on('restaurants.id', '=', 'orders.restaurant_id')
-                    ->where('orders.created_at', '>=', $weekStart);
+                $join->on(
+                    'restaurants.id',
+                    '=',
+                    'orders.restaurant_id'
+                )->where(
+                    'orders.created_at',
+                    '>=',
+                    $weekStart
+                );
             })
             ->select(
                 'restaurants.id',
                 'restaurants.name',
-                DB::raw('COALESCE(SUM(orders.total), 0) as revenue')
+                DB::raw(
+                    'COALESCE(SUM(orders.total), 0) as revenue'
+                )
             )
             ->groupBy('restaurants.id', 'restaurants.name')
             ->orderByDesc('revenue')
@@ -184,25 +258,24 @@ class AdminDashboardController extends Controller
             (float) $topRestaurants->max('revenue')
         );
 
-        $topRestaurants->transform(function ($restaurant) use (
-            $maxRestaurantRevenue
-        ) {
-            $restaurant->bar_percent = min(
-                100,
-                round(
-                    ((float) $restaurant->revenue / $maxRestaurantRevenue) * 100
-                )
-            );
+        $topRestaurants->transform(
+            function ($restaurant) use ($maxRestaurantRevenue) {
+                $restaurant->bar_percent = min(
+                    100,
+                    round(
+                        (
+                            (float) $restaurant->revenue
+                            / $maxRestaurantRevenue
+                        ) * 100
+                    )
+                );
 
-            return $restaurant;
-        });
+                return $restaurant;
+            }
+        );
 
-        // Count active orders per rider only if orders.rider_id exists.
-        // The Order model supplied so far does not define this relationship.
+        // Rider active orders, if the column exists
         $hasRiderColumn = Schema::hasColumn('orders', 'rider_id');
-        $rangeDays = in_array((int) request('range', 7), [7, 30, 90])
-        ? (int) request('range', 7)
-        : 7;
 
         foreach ($riders as $rider) {
             $rider->active_order_count = $hasRiderColumn
@@ -229,7 +302,13 @@ class AdminDashboardController extends Controller
             'orderStatusStats',
             'orderMixStyle',
             'topRestaurants',
-            'rangeDays'
+            'rangeDays',
+            'totalRestaurantCommission',
+            'totalRestaurantPayable',
+            'pendingSettlementAmount',
+            'paidSettlementAmount',
+            'paidOnlineOrders',
+            'recentSettlements'
         ));
     }
 }

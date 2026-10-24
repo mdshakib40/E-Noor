@@ -491,6 +491,28 @@
                                @checked(old('payment_method', 'cash_on_delivery') === 'cash_on_delivery')
                             >
 
+                            <label class="relative block cursor-pointer">
+                                <input
+                                    type="radio"
+                                    name="payment_method"
+                                    value="sslcommerz"
+                                    class="peer sr-only"
+                                    @checked(old('payment_method') === 'sslcommerz')
+                                >
+
+                                <div class="rounded-xl border border-white/10 p-4
+                                            peer-checked:border-amber-400
+                                            peer-checked:bg-amber-400/5">
+                                    <div class="font-semibold text-white">
+                                        Online Payment
+                                    </div>
+
+                                    <p class="mt-1 text-sm text-gray-400">
+                                        Pay securely using SSLCommerz.
+                                    </p>
+                                </div>
+                            </label>
+
                             <span class="flex items-center gap-4 rounded-2xl border border-white/10 bg-[#11120f] p-4 pr-12 transition hover:border-white/25 peer-checked:border-[#d7a858] peer-checked:bg-[#d7a858]/10 peer-focus-visible:ring-4 peer-focus-visible:ring-[#d7a858]/20">
                                 <span class="grid h-11 w-11 flex-none place-items-center rounded-xl bg-[#d7a858]/15 text-[#d7a858]">
                                     <i data-lucide="banknote" class="h-6 w-6"></i>
@@ -937,6 +959,11 @@
                 await wait(remaining);
             }
 
+            if (data.payment_required && data.redirect) {
+                window.location.href = data.redirect;
+                return;
+            }
+
             // SUCCESS: keep the user on this checkout page.
             if (data.success) {
     setState(
@@ -1021,5 +1048,4 @@ return;
     updateCount();
 })();
 </script>
-
 @endsection

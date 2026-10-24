@@ -16,9 +16,20 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'role' => RoleMiddleware::class,
         ]);
+
+        // Trust proxy headers for HTTPS requests through Cloudflare.
+        $middleware->trustProxies(at: '*');
+
+        $middleware->validateCsrfTokens(except: [
+            'payment/sslcommerz/success',
+            'payment/sslcommerz/fail',
+            'payment/sslcommerz/cancel',
+            'payment/sslcommerz/ipn',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
-            fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
+            fn (Request $request) =>
+                $request->is('api/*') || $request->expectsJson(),
         );
     })->create();

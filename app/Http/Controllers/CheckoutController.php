@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class CheckoutController extends Controller
 {
@@ -57,9 +58,7 @@ class CheckoutController extends Controller
         $zone = old('delivery_zone', 'inside_dhaka');
         $deliveryFee = self::ZONES[$zone] ?? self::ZONES['inside_dhaka'];
         $total = $subtotal + $deliveryFee;
-
         $money = fn ($amount) => '৳' . number_format($amount, 2);
-
         $cartRoute = 'cart.index';
 
         return view('checkout.index', compact(
@@ -86,9 +85,9 @@ class CheckoutController extends Controller
             'address' => ['required', 'string', 'max:2000'],
             'instructions' => ['nullable', 'string', 'max:300'],
             'payment_method' => [
-    'required',
-    Rule::in(['cash_on_delivery']),
-],
+                'required',
+                Rule::in(['cash_on_delivery', 'sslcommerz']),
+            ],
         ]);
 
         $order = DB::transaction(function () use ($validated) {
@@ -98,7 +97,7 @@ class CheckoutController extends Controller
                 ->get();
 
             if ($cartItems->isEmpty()) {
-                throw \Illuminate\Validation\ValidationException::withMessages([
+                throw ValidationException::withMessages([
                     'cart' => 'Your cart is empty.',
                 ]);
             }
@@ -108,7 +107,7 @@ class CheckoutController extends Controller
                 ->unique();
 
             if ($restaurantIds->count() !== 1) {
-                throw \Illuminate\Validation\ValidationException::withMessages([
+                throw ValidationException::withMessages([
                     'cart' => 'Please order from one restaurant at a time.',
                 ]);
             }
@@ -120,16 +119,18 @@ class CheckoutController extends Controller
 
                 if (
                     ! $menuItem ||
+                    ! $menuItem->restaurant ||
                     ! $menuItem->is_available ||
                     $menuItem->status !== 'active' ||
                     $menuItem->restaurant->status !== 'active'
                 ) {
-                    throw \Illuminate\Validation\ValidationException::withMessages([
+                    throw ValidationException::withMessages([
                         'cart' => 'An item in your cart is no longer available. Please review your cart.',
                     ]);
                 }
 
-                $subtotal += (float) $menuItem->price * $cartItem->quantity;
+                $subtotal += (float) $menuItem->price
+                    * $cartItem->quantity;
             }
 
             $deliveryFee = self::ZONES[$validated['delivery_zone']];
@@ -165,26 +166,40 @@ class CheckoutController extends Controller
                 ]);
             }
 
-            CartItem::where('user_id', auth()->id())->delete();
+            // COD: order placed, so clear cart.
+            // Online payment: preserve cart until payment confirmation.
+            if ($validated['payment_method'] === 'cash_on_delivery') {
+                CartItem::where('user_id', auth()->id())->delete();
+            }
 
             return $order;
         });
 
-        if ($request->expectsJson()) {
-    return response()->json([
-        'success' => true,
-        'order_number' => $order->order_number,
-        'total' => $order->total,
-    ]);
-}
+        if ($validated['payment_method'] === 'sslcommerz') {
+            $paymentUrl = route('sslcommerz.initiate', $order);
 
-if ($request->expectsJson()) {
-    return response()->json([
-        'success' => true,
-        'order_number' => $order->order_number,
-        'total' => $order->total,
-        'redirect' => route('dashboard'),
-    ]);
-}
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'payment_required' => true,
+                    'redirect' => $paymentUrl,
+                ]);
+            }
+
+            return redirect()->to($paymentUrl);
+        }
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'order_number' => $order->order_number,
+                'total' => $order->total,
+                'redirect' => route('dashboard'),
+            ]);
+        }
+
+        return redirect()
+            ->route('dashboard')
+            ->with('success', 'Your order has been placed successfully.');
     }
 }

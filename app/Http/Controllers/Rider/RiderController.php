@@ -10,6 +10,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use App\Models\RiderLocation;
+use App\Models\RestaurantSettlement;
 
 class RiderController extends Controller
 {
@@ -217,7 +218,8 @@ class RiderController extends Controller
             $rider,
             $from,
             $to,
-            $column
+            $column,
+            $action
         ) {
             $row = Order::query()
                 ->whereKey($order)
@@ -238,6 +240,40 @@ class RiderController extends Controller
             }
 
             $row->forceFill($changes)->save();
+
+            if ($action === 'delivered') {
+    $isCod = $row->payment_method === 'cash_on_delivery';
+    $isPaidOnline = $row->payment_method === 'sslcommerz'
+        && $row->payment_status === 'paid';
+
+    if ($isCod || $isPaidOnline) {
+        $commissionBase = max(
+            0,
+            (float) $row->subtotal - (float) $row->discount
+        );
+
+        $commissionRate = 10.00;
+        $commissionAmount = round(
+            $commissionBase * $commissionRate / 100,
+            2
+        );
+
+        RestaurantSettlement::firstOrCreate(
+            ['order_id' => $row->id],
+            [
+                'restaurant_id' => $row->restaurant_id,
+                'order_amount' => $commissionBase,
+                'commission_rate' => $commissionRate,
+                'commission_amount' => $commissionAmount,
+                'restaurant_amount' => round(
+                    $commissionBase - $commissionAmount,
+                    2
+                ),
+                'status' => 'pending',
+            ]
+        );
+    }
+}
 
             return true;
         });
@@ -404,6 +440,12 @@ class RiderController extends Controller
                 'code',
             ]) ?? '#' . $o->getKey(),
             'status' => $status,
+            'payment_method' => $o->payment_method,
+            'payment_status' => $o->payment_status,
+            'cash_collected_url' => route(
+                'rider.orders.cash-collected',
+                $o->getKey()
+            ),
             'step' => $step,
             'action' => $action,
             'restaurant' => $o->restaurant?->name,
@@ -482,5 +524,57 @@ class RiderController extends Controller
         'message' => 'Location updated successfully.',
         'recorded_at' => $location->recorded_at,
     ]);
+}
+
+public function cashCollected(
+    Request $request,
+    int $order
+): RedirectResponse {
+    $this->ensureReady();
+
+    $updated = DB::transaction(function () use ($request, $order) {
+        $row = Order::query()
+            ->whereKey($order)
+            ->where('rider_id', $request->user()->id)
+            ->lockForUpdate()
+            ->first();
+
+        abort_if(! $row, 404);
+
+        if ($this->statusOf($row) !== self::DELIVERED) {
+            return 'not_delivered';
+        }
+
+        if ($row->payment_method !== 'cash_on_delivery') {
+            return 'not_cod';
+        }
+
+        if ($row->payment_status === 'paid') {
+            return 'already_paid';
+        }
+
+        if ($row->payment_status !== 'pending') {
+            return 'invalid_payment_status';
+        }
+
+        $row->forceFill([
+            'payment_status' => 'paid',
+        ])->save();
+
+        return 'paid';
+    });
+
+    return back()->with(
+        in_array($updated, ['paid', 'already_paid'], true)
+            ? 'success'
+            : 'error',
+        match ($updated) {
+            'paid' => 'Cash collection confirmed. Payment marked as paid.',
+            'already_paid' => 'This order is already marked as paid.',
+            'not_delivered' => 'Only delivered orders can be marked as paid.',
+            'not_cod' => 'Cash collection is only available for COD orders.',
+            default => 'Payment status is invalid. Please check the order.',
+        }
+    );
 }
 }

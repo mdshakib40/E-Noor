@@ -94,19 +94,19 @@
     };
 
     $statusOptions = match ($status) {
-        'pending' => [
-            'accepted' => 'Accept Order',
-            'rejected' => 'Reject Order',
-        ],
-        'accepted' => [
-            'preparing' => 'Start Preparing',
-            'rejected' => 'Reject Order',
-        ],
-        'preparing' => [
-            'ready_for_pickup' => 'Ready for Pickup',
-        ],
-        default => [],
-    };
+    'pending', 'confirmed' => [
+        'accepted' => 'Accept Order',
+        'rejected' => 'Reject Order',
+    ],
+    'accepted' => [
+        'preparing' => 'Start Preparing',
+        'rejected' => 'Reject Order',
+    ],
+    'preparing' => [
+        'ready_for_pickup' => 'Ready for Pickup',
+    ],
+    default => [],
+};
 
     $nav = [
         ['Dashboard', 'ti-layout-dashboard', route('resturent.dashboard'), false],

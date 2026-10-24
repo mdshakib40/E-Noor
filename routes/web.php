@@ -17,6 +17,8 @@ use App\Http\Controllers\Rider\RiderController;
 use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\Customer\OrderTrackingController;
 use App\Http\Controllers\RestaurantDashboardController;
+use App\Http\Controllers\SslCommerzController;
+use App\Http\Controllers\AdminSettlementController;
 use App\Enums\UserRole;
 use App\Models\Restaurant;
 use App\Models\Order;
@@ -230,6 +232,10 @@ Route::middleware(['auth', 'role:rider'])->prefix('rider')->name('rider.')->grou
     '/orders/{order}/location',
     [RiderController::class, 'updateLocation']
     )->name('orders.location');
+    Route::post(
+    '/orders/{order}/cash-collected',
+    [RiderController::class, 'cashCollected']
+    )->whereNumber('order')->name('orders.cash-collected');
 
 });
 
@@ -401,3 +407,32 @@ Route::middleware('auth')->group(function () {
     Route::post('/checkout', [CheckoutController::class, 'store'])
         ->name('checkout.store');
 });
+
+Route::middleware('auth')->group(function () {
+    Route::get('/payment/sslcommerz/{order}/pay', [
+        SslCommerzController::class, 'initiate'
+    ])->name('sslcommerz.initiate');
+});
+
+Route::post('/payment/sslcommerz/success', [
+    SslCommerzController::class, 'success'
+])->name('sslcommerz.success');
+
+Route::post('/payment/sslcommerz/fail', [
+    SslCommerzController::class, 'fail'
+])->name('sslcommerz.fail');
+
+Route::post('/payment/sslcommerz/cancel', [
+    SslCommerzController::class, 'cancel'
+])->name('sslcommerz.cancel');
+
+Route::post('/payment/sslcommerz/ipn', [
+    SslCommerzController::class, 'ipn'
+])->name('sslcommerz.ipn');
+
+
+Route::post(
+    '/admin/settlements/{settlement}/pay',
+    [AdminSettlementController::class, 'markPaid']
+)
+    ->name('admin.settlements.pay');

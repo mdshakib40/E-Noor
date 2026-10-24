@@ -1,0 +1,32 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::table('orders', function (Blueprint $table) {
+            $table->string('transaction_id')->nullable()->unique();
+            $table->string('validation_id')->nullable();
+            $table->string('bank_transaction_id')->nullable();
+            $table->string('payment_gateway')->nullable();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::table('orders', function (Blueprint $table) {
+            $table->dropUnique(['transaction_id']);
+
+            $table->dropColumn([
+                'transaction_id',
+                'validation_id',
+                'bank_transaction_id',
+                'payment_gateway',
+            ]);
+        });
+    }
+};

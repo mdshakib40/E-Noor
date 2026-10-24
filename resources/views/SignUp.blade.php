@@ -823,103 +823,168 @@
 <!-- JAVASCRIPT -->
 <!-- ========================================================= -->
 
+
 <script>
-
 document.addEventListener('DOMContentLoaded', function () {
+    // Initialize icons
+    if (window.lucide) window.lucide.createIcons();
 
-    /* ---------------------------------------------------------
-       LUCIDE
-    --------------------------------------------------------- */
+    // Mobile menu
+    const mobileBtn = document.getElementById('mobileBtn');
+    const mobileMenu = document.getElementById('mobileMenu');
 
-    if (typeof lucide !== 'undefined') {
-        lucide.createIcons();
+    function setMobileMenu(open) {
+        if (!mobileBtn || !mobileMenu) return;
+
+        mobileMenu.classList.toggle('hidden', !open);
+        mobileBtn.setAttribute('aria-expanded', String(open));
+
+        const icon = mobileBtn.querySelector('[data-lucide]');
+        if (icon) {
+            icon.setAttribute('data-lucide', open ? 'x' : 'menu');
+            if (window.lucide) window.lucide.createIcons();
+        }
     }
 
+    if (mobileBtn && mobileMenu) {
+        mobileBtn.setAttribute('aria-expanded', 'false');
 
-    /* ---------------------------------------------------------
-       ELEMENTS
-    --------------------------------------------------------- */
+        mobileBtn.addEventListener('click', function () {
+            setMobileMenu(mobileMenu.classList.contains('hidden'));
+        });
 
-    const authModal = document.querySelector('#modal');
+        mobileMenu.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', () => setMobileMenu(false));
+        });
 
-    const loginForm = document.querySelector('#loginForm');
-    const joinForm = document.querySelector('#joinForm');
-    const forgotForm = document.querySelector('#forgotForm');
-    const verificationForm = document.querySelector('#verificationForm');
-    const resetPasswordForm = document.querySelector('#resetPasswordForm');
-    const passwordResetSuccess = document.querySelector('#passwordResetSuccess');
+        mobileMenu.querySelectorAll('form').forEach(form => {
+            form.addEventListener('submit', () => setMobileMenu(false));
+        });
+    }
 
-    const loginTab = document.querySelector('#loginTab');
-    const joinTab = document.querySelector('#joinTab');
+    // Search overlay
+    const navSearch = document.getElementById('navSearch');
+    const heroSearch = document.getElementById('heroSearch');
+    const searchOverlay = document.getElementById('searchOverlay');
+    const searchInput = document.getElementById('searchInput');
+    const searchClose = document.getElementById('searchClose');
 
-    const authSwitch = document.querySelector('#authSwitch');
-    const authText = document.querySelector('#authText');
-    const authSwitchWrapper = document.querySelector('#authSwitchWrapper');
+    function openSearch() {
+        if (!searchOverlay) return;
 
-    const closeModalButton = document.querySelector('#closeModal');
-
-    const forgotPasswordButton = document.querySelector('#forgotPasswordButton');
-    const forgotBackButton = document.querySelector('#forgotBackButton');
-    const verificationBackButton = document.querySelector('#verificationBackButton');
-    const loginNowButton = document.querySelector('#loginNowButton');
-
-
-    /* ---------------------------------------------------------
-       HOME LOGIN / REGISTER BUTTONS
-    --------------------------------------------------------- */
-
-   const homeLoginButtons = document.querySelectorAll(
-    '#loginButton, #homeLoginButton, [data-auth="login"], [data-open-modal]'
-);
-
-    const homeRegisterButtons = document.querySelectorAll(
-        '#registerButton, #joinButton, #homeRegisterButton, [data-auth="register"]'
-    );
-
-
-    /* ---------------------------------------------------------
-       OPEN MODAL
-    --------------------------------------------------------- */
-
-    function openModal() {
-
-        if (!authModal) {
-            console.error('Auth modal #modal not found.');
-            return;
-        }
-
-        authModal.classList.remove('hidden');
-        authModal.classList.add('grid');
-
+        searchOverlay.classList.remove('hidden');
+        searchOverlay.classList.add('flex');
         document.body.classList.add('overflow-hidden');
 
+        if (window.lucide) window.lucide.createIcons();
+        setTimeout(() => searchInput?.focus(), 50);
     }
 
+    function closeSearch() {
+        if (!searchOverlay) return;
 
-    /* ---------------------------------------------------------
-       CLOSE MODAL
-    --------------------------------------------------------- */
+        searchOverlay.classList.add('hidden');
+        searchOverlay.classList.remove('flex');
+        document.body.classList.remove('overflow-hidden');
+    }
+
+    navSearch?.addEventListener('click', openSearch);
+    heroSearch?.addEventListener('click', openSearch);
+    searchClose?.addEventListener('click', closeSearch);
+
+    searchOverlay?.addEventListener('click', function (event) {
+        if (event.target === searchOverlay) closeSearch();
+    });
+
+    // Live search across restaurant and food cards
+    const searchableCards = document.querySelectorAll('[data-search]');
+
+    function filterSearch() {
+        if (!searchInput) return;
+
+        const query = searchInput.value.trim().toLocaleLowerCase();
+
+        searchableCards.forEach(card => {
+            const text = (card.getAttribute('data-search') || '')
+                .toLocaleLowerCase();
+
+            card.classList.toggle(
+                'hidden',
+                query !== '' && !text.includes(query)
+            );
+        });
+    }
+
+    searchInput?.addEventListener('input', filterSearch);
+
+    searchInput?.addEventListener('keydown', function (event) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            closeSearch();
+
+            document.getElementById('discover')?.scrollIntoView({
+                behavior: 'smooth'
+            });
+        }
+    });
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape') {
+            closeSearch();
+            closeModal();
+        }
+
+        if (
+            event.key === '/' &&
+            !['INPUT', 'TEXTAREA'].includes(
+                document.activeElement?.tagName
+            )
+        ) {
+            event.preventDefault();
+            openSearch();
+        }
+    });
+
+    // Auth modal elements
+    const authModal = document.getElementById('modal');
+    const loginForm = document.getElementById('loginForm');
+    const joinForm = document.getElementById('joinForm');
+    const forgotForm = document.getElementById('forgotForm');
+    const verificationForm = document.getElementById('verificationForm');
+    const resetPasswordForm = document.getElementById('resetPasswordForm');
+    const passwordResetSuccess = document.getElementById('passwordResetSuccess');
+
+    const loginTab = document.getElementById('loginTab');
+    const joinTab = document.getElementById('joinTab');
+    const authSwitch = document.getElementById('authSwitch');
+    const authText = document.getElementById('authText');
+    const authSwitchWrapper = document.getElementById('authSwitchWrapper');
+
+    const closeModalButton = document.getElementById('closeModal');
+    const forgotPasswordButton = document.getElementById('forgotPasswordButton');
+    const forgotBackButton = document.getElementById('forgotBackButton');
+    const verificationBackButton = document.getElementById('verificationBackButton');
+    const loginNowButton = document.getElementById('loginNowButton');
+
+    function openModal() {
+        if (!authModal) return;
+
+        closeSearch();
+        authModal.classList.remove('hidden');
+        authModal.classList.add('grid');
+        document.body.classList.add('overflow-hidden');
+    }
 
     function closeModal() {
-
-        if (!authModal) {
-            return;
-        }
+        if (!authModal) return;
 
         authModal.classList.add('hidden');
         authModal.classList.remove('grid');
-
         document.body.classList.remove('overflow-hidden');
-
     }
 
-
-    /* ---------------------------------------------------------
-       HIDE EVERYTHING
-    --------------------------------------------------------- */
-
     function hideAllScreens() {
-
         [
             loginForm,
             joinForm,
@@ -927,772 +992,262 @@ document.addEventListener('DOMContentLoaded', function () {
             verificationForm,
             resetPasswordForm,
             passwordResetSuccess
-        ].forEach(function (element) {
-
-            if (element) {
-                element.classList.add('hidden');
-            }
-
-        });
-
+        ].forEach(element => element?.classList.add('hidden'));
     }
-
-
-    /* ---------------------------------------------------------
-       RESET TABS
-    --------------------------------------------------------- */
 
     function resetTabs() {
-
-        if (loginTab) {
-
-            loginTab.classList.remove(
+        [loginTab, joinTab].forEach(tab => {
+            tab?.classList.remove(
                 'bg-white',
                 'shadow-[0_4px_13px_#00000010]'
             );
-
-        }
-
-        if (joinTab) {
-
-            joinTab.classList.remove(
-                'bg-white',
-                'shadow-[0_4px_13px_#00000010]'
-            );
-
-        }
-
+        });
     }
-
-
-    /* ---------------------------------------------------------
-       SHOW LOGIN
-    --------------------------------------------------------- */
 
     function showLogin() {
-
         hideAllScreens();
         resetTabs();
 
-        if (loginForm) {
-            loginForm.classList.remove('hidden');
-        }
+        loginForm?.classList.remove('hidden');
+        loginTab?.classList.add(
+            'bg-white',
+            'shadow-[0_4px_13px_#00000010]'
+        );
 
-        if (loginTab) {
-
-            loginTab.classList.add(
-                'bg-white',
-                'shadow-[0_4px_13px_#00000010]'
-            );
-
-        }
-
-        if (authText) {
-            authText.textContent = 'New to NOOR?';
-        }
-
-        if (authSwitch) {
-            authSwitch.textContent = 'Create an account';
-        }
-
-        if (authSwitchWrapper) {
-            authSwitchWrapper.classList.remove('hidden');
-        }
-
+        if (authText) authText.textContent = 'New to NOOR?';
+        if (authSwitch) authSwitch.textContent = 'Create an account';
+        authSwitchWrapper?.classList.remove('hidden');
     }
-
-
-    /* ---------------------------------------------------------
-       SHOW REGISTER
-    --------------------------------------------------------- */
 
     function showRegister() {
-
         hideAllScreens();
         resetTabs();
 
-        if (joinForm) {
-            joinForm.classList.remove('hidden');
-        }
+        joinForm?.classList.remove('hidden');
+        joinTab?.classList.add(
+            'bg-white',
+            'shadow-[0_4px_13px_#00000010]'
+        );
 
-        if (joinTab) {
-
-            joinTab.classList.add(
-                'bg-white',
-                'shadow-[0_4px_13px_#00000010]'
-            );
-
-        }
-
-        if (authText) {
-            authText.textContent = 'Already have an account?';
-        }
-
-        if (authSwitch) {
-            authSwitch.textContent = 'Sign in';
-        }
-
-        if (authSwitchWrapper) {
-            authSwitchWrapper.classList.remove('hidden');
-        }
-
+        if (authText) authText.textContent = 'Already have an account?';
+        if (authSwitch) authSwitch.textContent = 'Sign in';
+        authSwitchWrapper?.classList.remove('hidden');
     }
-
-
-    /* ---------------------------------------------------------
-       SHOW FORGOT PASSWORD
-    --------------------------------------------------------- */
 
     function showForgotPassword() {
-
         hideAllScreens();
         resetTabs();
-
-        if (forgotForm) {
-            forgotForm.classList.remove('hidden');
-        }
-
-        if (authSwitchWrapper) {
-            authSwitchWrapper.classList.add('hidden');
-        }
-
+        forgotForm?.classList.remove('hidden');
+        authSwitchWrapper?.classList.add('hidden');
     }
-
-
-    /* ---------------------------------------------------------
-       SHOW VERIFICATION
-    --------------------------------------------------------- */
 
     function showVerificationCode() {
-
         hideAllScreens();
         resetTabs();
-
-        if (verificationForm) {
-            verificationForm.classList.remove('hidden');
-        }
-
-        if (authSwitchWrapper) {
-            authSwitchWrapper.classList.add('hidden');
-        }
-
-        const verificationCode =
-            document.querySelector('#verificationCode');
-
-        if (verificationCode) {
-            verificationCode.focus();
-        }
-
+        verificationForm?.classList.remove('hidden');
+        authSwitchWrapper?.classList.add('hidden');
+        document.getElementById('verificationCode')?.focus();
     }
-
-
-    /* ---------------------------------------------------------
-       SHOW RESET PASSWORD
-    --------------------------------------------------------- */
 
     function showResetPassword() {
-
         hideAllScreens();
         resetTabs();
-
-        if (resetPasswordForm) {
-            resetPasswordForm.classList.remove('hidden');
-        }
-
-        if (authSwitchWrapper) {
-            authSwitchWrapper.classList.add('hidden');
-        }
-
-        const resetPassword =
-            document.querySelector('#resetPassword');
-
-        if (resetPassword) {
-            resetPassword.focus();
-        }
-
+        resetPasswordForm?.classList.remove('hidden');
+        authSwitchWrapper?.classList.add('hidden');
+        document.getElementById('resetPassword')?.focus();
     }
-
-
-    /* ---------------------------------------------------------
-       SHOW SUCCESS
-    --------------------------------------------------------- */
 
     function showPasswordResetSuccess() {
-
         hideAllScreens();
         resetTabs();
+        passwordResetSuccess?.classList.remove('hidden');
+        authSwitchWrapper?.classList.add('hidden');
 
-        if (passwordResetSuccess) {
-            passwordResetSuccess.classList.remove('hidden');
-        }
-
-        if (authSwitchWrapper) {
-            authSwitchWrapper.classList.add('hidden');
-        }
-
-        if (typeof lucide !== 'undefined') {
-            lucide.createIcons();
-        }
-
+        if (window.lucide) window.lucide.createIcons();
     }
 
-
-    /* ---------------------------------------------------------
-       HOME LOGIN BUTTON
-    --------------------------------------------------------- */
-
-    homeLoginButtons.forEach(function (button) {
-
-        button.addEventListener('click', function (e) {
-
-            e.preventDefault();
-
+    // Open login/register from all matching buttons
+    document.querySelectorAll(
+        '#loginButton, #homeLoginButton, [data-auth="login"], [data-open-modal]:not([data-open-join])'
+    ).forEach(button => {
+        button.addEventListener('click', function (event) {
+            event.preventDefault();
+            setMobileMenu(false);
             openModal();
             showLogin();
-
         });
-
     });
 
-
-    /* ---------------------------------------------------------
-       HOME REGISTER BUTTON
-    --------------------------------------------------------- */
-
-    homeRegisterButtons.forEach(function (button) {
-
-        button.addEventListener('click', function (e) {
-
-            e.preventDefault();
-
+    document.querySelectorAll(
+        '#registerButton, #joinButton, #homeRegisterButton, [data-auth="register"], [data-open-join]'
+    ).forEach(button => {
+        button.addEventListener('click', function (event) {
+            event.preventDefault();
+            setMobileMenu(false);
             openModal();
             showRegister();
-
         });
-
     });
 
+    loginTab?.addEventListener('click', function (event) {
+        event.preventDefault();
+        showLogin();
+    });
 
-    /* ---------------------------------------------------------
-       LOGIN TAB
-    --------------------------------------------------------- */
+    joinTab?.addEventListener('click', function (event) {
+        event.preventDefault();
+        showRegister();
+    });
 
-    if (loginTab) {
+    authSwitch?.addEventListener('click', function (event) {
+        event.preventDefault();
 
-        loginTab.addEventListener('click', function (e) {
-
-            e.preventDefault();
-
-            openModal();
+        if (joinForm && !joinForm.classList.contains('hidden')) {
             showLogin();
-
-        });
-
-    }
-
-
-    /* ---------------------------------------------------------
-       REGISTER TAB
-    --------------------------------------------------------- */
-
-    if (joinTab) {
-
-        joinTab.addEventListener('click', function (e) {
-
-            e.preventDefault();
-
-            openModal();
+        } else {
             showRegister();
-
-        });
-
-    }
-
-
-    /* ---------------------------------------------------------
-       AUTH SWITCH
-    --------------------------------------------------------- */
-
-    if (authSwitch) {
-
-        authSwitch.addEventListener('click', function (e) {
-
-            e.preventDefault();
-
-            if (
-                joinForm &&
-                !joinForm.classList.contains('hidden')
-            ) {
-
-                showLogin();
-
-            } else {
-
-                showRegister();
-
-            }
-
-        });
-
-    }
-
-
-    /* ---------------------------------------------------------
-       FORGOT PASSWORD
-    --------------------------------------------------------- */
-
-    if (forgotPasswordButton) {
-
-        forgotPasswordButton.addEventListener(
-            'click',
-            function (e) {
-
-                e.preventDefault();
-
-                showForgotPassword();
-
-            }
-        );
-
-    }
-
-
-    /* ---------------------------------------------------------
-       BACK TO LOGIN
-    --------------------------------------------------------- */
-
-    if (forgotBackButton) {
-
-        forgotBackButton.addEventListener(
-            'click',
-            function (e) {
-
-                e.preventDefault();
-
-                showLogin();
-
-            }
-        );
-
-    }
-
-
-    /* ---------------------------------------------------------
-       BACK FROM VERIFICATION
-    --------------------------------------------------------- */
-
-    if (verificationBackButton) {
-
-        verificationBackButton.addEventListener(
-            'click',
-            function (e) {
-
-                e.preventDefault();
-
-                showForgotPassword();
-
-            }
-        );
-
-    }
-
-
-    /* ---------------------------------------------------------
-       LOGIN NOW
-    --------------------------------------------------------- */
-
-    if (loginNowButton) {
-
-        loginNowButton.addEventListener(
-            'click',
-            function (e) {
-
-                e.preventDefault();
-
-                openModal();
-                showLogin();
-
-                const loginEmail =
-                    loginForm?.querySelector(
-                        'input[name="email"]'
-                    );
-
-                if (loginEmail) {
-                    loginEmail.focus();
-                }
-
-            }
-        );
-
-    }
-
-
-    /* ---------------------------------------------------------
-       CLOSE MODAL
-    --------------------------------------------------------- */
-
-    if (closeModalButton) {
-
-        closeModalButton.addEventListener(
-            'click',
-            function (e) {
-
-                e.preventDefault();
-
-                closeModal();
-
-            }
-        );
-
-    }
-
-
-    /* ---------------------------------------------------------
-       CLOSE WHEN CLICKING OUTSIDE
-    --------------------------------------------------------- */
-
-    if (authModal) {
-
-        authModal.addEventListener(
-            'click',
-            function (e) {
-
-                if (e.target === authModal) {
-                    closeModal();
-                }
-
-            }
-        );
-
-    }
-
-
-    /* ---------------------------------------------------------
-       PASSWORD SHOW / HIDE
-    --------------------------------------------------------- */
-
-    document
-        .querySelectorAll('[data-password]')
-        .forEach(function (button) {
-
-            button.addEventListener(
-                'click',
-                function (e) {
-
-                    e.preventDefault();
-
-                    const inputId =
-                        this.getAttribute('data-password');
-
-                    const input =
-                        document.getElementById(inputId);
-
-                    const icon =
-                        this.querySelector('[data-lucide]');
-
-                    if (!input) {
-                        return;
-                    }
-
-                    if (input.type === 'password') {
-
-                        input.type = 'text';
-
-                        if (icon) {
-
-                            icon.setAttribute(
-                                'data-lucide',
-                                'eye-off'
-                            );
-
-                        }
-
-                    } else {
-
-                        input.type = 'password';
-
-                        if (icon) {
-
-                            icon.setAttribute(
-                                'data-lucide',
-                                'eye'
-                            );
-
-                        }
-
-                    }
-
-                    if (typeof lucide !== 'undefined') {
-                        lucide.createIcons();
-                    }
-
-                }
+        }
+    });
+
+    forgotPasswordButton?.addEventListener('click', function (event) {
+        event.preventDefault();
+        showForgotPassword();
+    });
+
+    forgotBackButton?.addEventListener('click', function (event) {
+        event.preventDefault();
+        showLogin();
+    });
+
+    verificationBackButton?.addEventListener('click', function (event) {
+        event.preventDefault();
+        showForgotPassword();
+    });
+
+    loginNowButton?.addEventListener('click', function (event) {
+        event.preventDefault();
+        openModal();
+        showLogin();
+        loginForm?.querySelector('input[name="email"]')?.focus();
+    });
+
+    closeModalButton?.addEventListener('click', function (event) {
+        event.preventDefault();
+        closeModal();
+    });
+
+    authModal?.addEventListener('click', function (event) {
+        if (event.target === authModal) closeModal();
+    });
+
+    // Password visibility toggles
+    document.querySelectorAll('[data-password]').forEach(button => {
+        button.addEventListener('click', function (event) {
+            event.preventDefault();
+
+            const input = document.getElementById(
+                this.getAttribute('data-password')
             );
+            const icon = this.querySelector('[data-lucide]');
 
+            if (!input) return;
+
+            input.type = input.type === 'password' ? 'text' : 'password';
+
+            if (icon) {
+                icon.setAttribute(
+                    'data-lucide',
+                    input.type === 'password' ? 'eye' : 'eye-off'
+                );
+            }
+
+            if (window.lucide) window.lucide.createIcons();
         });
+    });
 
+    // OTP: digits only, maximum six
+    const verificationCode = document.getElementById('verificationCode');
 
-    /* ---------------------------------------------------------
-       OTP ONLY NUMBERS
-    --------------------------------------------------------- */
+    verificationCode?.addEventListener('input', function () {
+        this.value = this.value.replace(/\D/g, '').slice(0, 6);
+    });
 
-    const verificationCode =
-        document.querySelector('#verificationCode');
+    // Password confirmation validation
+    function validatePasswords(form, passwordId, confirmationId) {
+        form?.addEventListener('submit', function (event) {
+            const password = document.getElementById(passwordId);
+            const confirmation = document.getElementById(confirmationId);
 
-    if (verificationCode) {
+            if (!password || !confirmation) return;
 
-        verificationCode.addEventListener(
-            'input',
-            function () {
-
-                this.value = this.value
-                    .replace(/\D/g, '')
-                    .slice(0, 6);
-
-            }
-        );
-
-    }
-
-
-    /* ---------------------------------------------------------
-       REGISTER FRONTEND VALIDATION
-    --------------------------------------------------------- */
-
-    if (joinForm) {
-
-        joinForm.addEventListener(
-            'submit',
-            function (e) {
-
-                const passwordInput =
-                    document.querySelector('#joinPassword');
-
-                const confirmationInput =
-                    document.querySelector(
-                        '#joinPasswordConfirmation'
-                    );
-
-                if (!passwordInput || !confirmationInput) {
-                    return;
-                }
-
-                const password =
-                    passwordInput.value;
-
-                const confirmation =
-                    confirmationInput.value;
-
-                if (password.length < 8) {
-
-                    e.preventDefault();
-
-                    alert(
-                        'Password must be at least 8 characters.'
-                    );
-
-                    passwordInput.focus();
-
-                    return;
-                }
-
-                if (password !== confirmation) {
-
-                    e.preventDefault();
-
-                    alert(
-                        'Passwords do not match.'
-                    );
-
-                    confirmationInput.focus();
-
-                    return;
-                }
-
-            }
-        );
-
-    }
-
-
-    /* ---------------------------------------------------------
-       RESET PASSWORD FRONTEND VALIDATION
-    --------------------------------------------------------- */
-
-    if (resetPasswordForm) {
-
-        resetPasswordForm.addEventListener(
-            'submit',
-            function (e) {
-
-                const passwordInput =
-                    document.querySelector('#resetPassword');
-
-                const confirmationInput =
-                    document.querySelector(
-                        '#resetPasswordConfirmation'
-                    );
-
-                if (
-                    !passwordInput ||
-                    !confirmationInput
-                ) {
-                    return;
-                }
-
-                const password =
-                    passwordInput.value;
-
-                const confirmation =
-                    confirmationInput.value;
-
-                if (password.length < 8) {
-
-                    e.preventDefault();
-
-                    alert(
-                        'Password must be at least 8 characters.'
-                    );
-
-                    passwordInput.focus();
-
-                    return;
-                }
-
-                if (password !== confirmation) {
-
-                    e.preventDefault();
-
-                    alert(
-                        'Passwords do not match.'
-                    );
-
-                    confirmationInput.focus();
-
-                    return;
-                }
-
-            }
-        );
-
-    }
-
-
-    /* ---------------------------------------------------------
-       BUTTON LOADING ANIMATION
-    --------------------------------------------------------- */
-
-    document
-        .querySelectorAll('[data-loading-button]')
-        .forEach(function (button) {
-
-            const form = button.closest('form');
-
-            if (!form) {
+            if (password.value.length < 8) {
+                event.preventDefault();
+                alert('Password must be at least 8 characters.');
+                password.focus();
                 return;
             }
 
-            form.addEventListener(
-                'submit',
-                function (e) {
-
-                    if (e.defaultPrevented) {
-                        return;
-                    }
-
-                    button.disabled = true;
-
-                    button.classList.add(
-                        'opacity-80',
-                        'cursor-not-allowed'
-                    );
-
-                    const text =
-                        button.querySelector('.button-text');
-
-                    const icon =
-                        button.querySelector('[data-lucide]');
-
-                    if (text) {
-                        text.textContent = 'Please wait...';
-                    }
-
-                    if (icon) {
-
-                        icon.setAttribute(
-                            'data-lucide',
-                            'loader-circle'
-                        );
-
-                        icon.classList.add(
-                            'animate-spin'
-                        );
-
-                    }
-
-                    if (typeof lucide !== 'undefined') {
-                        lucide.createIcons();
-                    }
-
-                }
-            );
-
-        });
-
-
-    /* ---------------------------------------------------------
-       REOPEN CORRECT SCREEN AFTER REDIRECT
-    --------------------------------------------------------- */
-
-    @if (session('open_auth_modal') === 'login')
-
-        openModal();
-        showLogin();
-
-    @elseif (session('open_auth_modal') === 'register')
-
-        openModal();
-        showRegister();
-
-    @elseif (session('open_auth_modal') === 'forgot')
-
-        openModal();
-        showForgotPassword();
-
-    @elseif (session('open_auth_modal') === 'verification')
-
-        openModal();
-        showVerificationCode();
-
-    @elseif (session('open_auth_modal') === 'reset-password')
-
-        openModal();
-        showResetPassword();
-
-    @elseif (session('open_auth_modal') === 'password-success')
-
-        openModal();
-        showPasswordResetSuccess();
-
-    @endif
-
-
-    /* ---------------------------------------------------------
-       ESC TO CLOSE
-    --------------------------------------------------------- */
-
-    document.addEventListener(
-        'keydown',
-        function (e) {
-
-            if (e.key === 'Escape') {
-                closeModal();
+            if (password.value !== confirmation.value) {
+                event.preventDefault();
+                alert('Passwords do not match.');
+                confirmation.focus();
             }
+        });
+    }
 
-        }
+    validatePasswords(joinForm, 'joinPassword', 'joinPasswordConfirmation');
+    validatePasswords(
+        resetPasswordForm,
+        'resetPassword',
+        'resetPasswordConfirmation'
     );
 
-});
+    // Loading buttons
+    document.querySelectorAll('[data-loading-button]').forEach(button => {
+        const form = button.closest('form');
+        if (!form) return;
 
+        form.addEventListener('submit', function (event) {
+            if (event.defaultPrevented) return;
+
+            button.disabled = true;
+            button.classList.add('opacity-80', 'cursor-not-allowed');
+
+            const text = button.querySelector('.button-text');
+            const icon = button.querySelector('[data-lucide]');
+
+            if (text) text.textContent = 'Please wait...';
+
+            if (icon) {
+                icon.setAttribute('data-lucide', 'loader-circle');
+                icon.classList.add('animate-spin');
+            }
+
+            if (window.lucide) window.lucide.createIcons();
+        });
+    });
+
+    // Restore the appropriate auth screen after redirect
+    @if (session('open_auth_modal') === 'login')
+        openModal();
+        showLogin();
+    @elseif (session('open_auth_modal') === 'register')
+        openModal();
+        showRegister();
+    @elseif (session('open_auth_modal') === 'forgot')
+        openModal();
+        showForgotPassword();
+    @elseif (session('open_auth_modal') === 'verification')
+        openModal();
+        showVerificationCode();
+    @elseif (session('open_auth_modal') === 'reset-password')
+        openModal();
+        showResetPassword();
+    @elseif (session('open_auth_modal') === 'password-success')
+        openModal();
+        showPasswordResetSuccess();
+    @endif
+});
 </script>
+
 

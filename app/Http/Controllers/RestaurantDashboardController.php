@@ -13,7 +13,7 @@ class RestaurantDashboardController extends Controller
     {
         $user = Auth::user();
 
-        // Find the restaurant belonging to the logged-in user.
+        // Find restaurant belonging to the logged-in user.
         if ($user->role === UserRole::RESTAURANT_OWNER) {
             $restaurant = $user->restaurants()->first();
         } else {
@@ -33,7 +33,7 @@ class RestaurantDashboardController extends Controller
             abort(403, 'No restaurant is assigned to this account.');
         }
 
-        // Scope every order query to this restaurant.
+        // Scope all order queries to this restaurant.
         $orders = Order::where('restaurant_id', $restaurant->id);
 
         $totalOrders = (clone $orders)->count();
@@ -42,13 +42,14 @@ class RestaurantDashboardController extends Controller
             ->where('status', 'pending')
             ->count();
 
+        // Include both completed and delivered orders.
         $completedOrders = (clone $orders)
-            ->where('status', 'completed')
+            ->whereIn('status', ['completed', 'delivered'])
             ->count();
 
-        // Revenue from completed orders.
+        // Revenue from completed/delivered orders.
         $totalRevenue = (clone $orders)
-            ->where('status', 'completed')
+            ->whereIn('status', ['completed', 'delivered'])
             ->sum('total');
 
         $menuItemsCount = $restaurant->menuItems()->count();
